@@ -1,0 +1,374 @@
+---
+title: "Data Science: Inference and Modeling - HarvardX: PH125.4x"
+output: html_notebook
+---
+
+# Section 5: Bayesian Statistics
+
+## 5.1 Overview
+
+In Section 5, you will learn about Bayesian statistics through looking at examples from rare disease diagnosis and baseball.  
+After completing Section 5, you will be able to:  
+* Apply Bayes' theorem to calculate the probability of A given B.
+* Understand how to use hierarchical models to make better predictions by considering multiple levels of variability.
+* Compute a posterior probability using an empirical Bayesian approach.
+* Calculate a 95% credible interval from a posterior probability.
+
+```{r}
+library(tidyverse)
+```
+
+## 5.2 Bayesian Statistics
+
+### 5.2.1 Bayesian Statistics
+
+**Key points**
+
+* In the urn model, it does not make sense to talk about the probability of $p$ being greater than a certain value because $p$ is a fixed value.
+With Bayesian statistics, we assume that $p$ is in fact random, which allows us to calculate probabilities related to $p$.
+Hierarchical models describe variability at different levels and incorporate all these levels into a model for estimating $p$.
+
+
+### 5.2.2 Bayes' Theorem
+
+**Key points**
+
+* Bayes' Theorem states that the probability of event A happening given event B is equal to the probability of both A and B divided by the probability of event B:
+$$Pr(A \mid B) = \frac{Pr(B \mid A)Pr(A)}{Pr(B)}$$
+* Bayes' Theorem shows that a test for a very rare disease will have a high percentage of false positives even if the accuracy of the test is high.
+
+**Equations: Cystic fibrosis test probabilities**
+
+In these probabilities, $+$ represents a positive test, $-$ represents a negative test, $D=0$ indicates no disease, and $D=1$ indicates the disease is present.
+
+Probability of having the disease given a positive test: $Pr(D=1 \mid +)$  
+99% test accuracy when disease is present: $Pr(+ \mid D=1) = 0.99$  
+99% test accuracy when disease is absent: $Pr(- \mid D=1) = 0.99$  
+Rate of cystic fibrosis: $Pr(D=1)=0.00025$  
+Bayes' theorem can be applied like this:  
+$$Pr(D=1 \mid +) = \frac{Pr(+ \mid D=1)Pr(D=1)}{Pr(+)}$$
+$$Pr(D=1 \mid +) = \frac{Pr(+ \mid D=1)Pr(D=1)}{Pr(+ \mid D=1)Pr(D=1) + Pr(+ \mid D=0)Pr(D=0)}$$  
+Substituting known values, we obtain: $\frac{0.99 * 0.00025}{0.99 * 0.00025 + 0.01 * 0.99975} = 0.02$
+
+**Code: Monte Carlo simulation**
+```{r}
+prev <- 0.00025    # disease prevalence
+N <- 100000    # number of tests
+outcome <- sample(c("Disease", "Healthy"), N, replace = TRUE, prob = c(prev, 1-prev))
+
+N_D <- sum(outcome == "Disease")    # number with disease
+N_H <- sum(outcome == "Healthy")    # number healthy
+
+# for each person, randomly determine if test is + or -
+accuracy <- 0.99
+test <- vector("character", N)
+test[outcome == "Disease"] <- sample(c("+", "-"), N_D, replace=TRUE, prob = c(accuracy, 1-accuracy))
+test[outcome == "Healthy"] <- sample(c("-", "+"), N_H, replace=TRUE, prob = c(accuracy, 1-accuracy))
+
+table(outcome, test)
+```
+
+
+### 5.2.3 Bayes in Practice
+
+**Key points**
+
+* The techniques we have used up until now are referred to as *frequentist statistics* as they consider only the frequency of outcomes in a dataset and do not include any outside information. Frequentist statistics allow us to compute *confidence intervals* and *p-values*.
+* Frequentist statistics can have problems when sample sizes are small and when the data are extreme compared to historical results.
+* *Bayesian statistics* allows prior knowledge to modify observed results, which alters our conclusions about event probabilities.
+
+
+### 5.2.4 The Hirearchical Model
+
+**Key points**
+
+* Hierarchical models use multiple levels of variability to model results. They are hierarchical because values in the lower levels of the model are computed using values from higher levels of the model.
+* We model baseball player batting average using a hierarchical model with two levels of variability:
+  + $p \sim N(\mu,\tau)$ describes player-to-player variability in natural ability to hit, which has a mean $\mu$ and standard deviation $\tau$.
+  + $Y \mid p \sim N(p,\sigma)$ describes a player's observed batting average given their ability $p$, which has a mean $p$ and standard deviation $\sigma = \sqrt{p(1-p)/N}$. This represents variability due to luck.
+  + In Bayesian hierarchical models, the first level is called the *prior distribution* and the second level is called the *sampling distribution*.
+* *The posterior distribution* allows us to compute the probability distribution of $p$   given that we have observed data $Y$.
+* By the continuous version of Bayes' rule, the *expected value of the posterior distribution* $p$ given $Y=y$ is a weighted average between the prior mean $\mu$ and the observed data $Y$:
+$E(p \mid y) = B \mu + (1-B) Y$, where $B=\frac{\sigma^2}{\sigma^2+\tau^2}$
+* *The standard error of the posterior distribution* $SE(p\mid Y)^2 = \frac{1}{1/\sigma^2 + 1/\tau^2}$. Note that you will need to take the square root of both sides to solve for the standard error.
+* This Bayesian approach is also known as $shrinking$. When $\sigma$ is large, $B$ is close to 1 and our prediction of $p$ shrinks towards the mean $(\mu)$. When $\sigma$ is small, $B$ is close to 0 and our prediction of $p$ is more weighted towards the observed data $Y$.
+
+
+### 5.2.5 Assessment
+
+#### Exercise 1 - Statistics in the Courtroom
+In 1999 in England Sally Clark was found guilty of the murder of two of her sons. Both infants were found dead in the morning, one in 1996 and another in 1998, and she claimed the cause of death was sudden infant death syndrome (SIDS). No evidence of physical harm was found on the two infants so the main piece of evidence against her was the testimony of Professor Sir Roy Meadow, who testified that the chances of two infants dying of SIDS was 1 in 73 million. He arrived at this figure by finding that the rate of SIDS was 1 in 8,500 and then calculating that the chance of two SIDS cases was 8,500*8,500 ~ 73 million.
+Based on what we've learned throughout this course, which statement best describes a potential flaw in Sir Meadow's reasoning?
+
+**Instructions**  
+A: Sir Meadow assumed the second death was independent of the first son being affected, thereby ignoring possible genetic causes.
+
+
+#### Exercise 2 - Recalculating the SIDS Statistics
+Let's assume that there is in fact a genetic component to SIDS and the the probability of Pr(second case of SIDS|first case of SIDS) = 1/100, is much higher than 1 in 8,500.  
+What is the probability of both of Sally Clark's sons dying of SIDS?
+
+**Code**
+```{r}
+# Define `Pr_1` as the probability of the first son dying of SIDS
+Pr_1 <- 1/8500
+
+# Define `Pr_2` as the probability of the second son dying of SIDS
+Pr_2 <- 1/100
+
+# Calculate the probability of both sons dying of SIDS. Print this value to the console.
+Pr_12 <- Pr_2 * Pr_1
+Pr_12
+```
+
+#### Exercise 3 - Bayes' Rule in the Courtroom
+Many press reports stated that the expert claimed the probability of Sally Clark being innocent as 1 in 73 million. Perhaps the jury and judge also interpreted the testimony this way. This probability can be written like this:
+
+Pr(mother is a murderer | two children found dead with no evidence of harm)
+Bayes' rule tells us this probability is equal to:
+
+#### Exercise 4 - Calculate the Probability
+Assume that the probability of a murderer finding a way to kill her two children without leaving evidence of physical harm is:
+
+Pr(two children found dead with no evidence of harm | mother is a murderer)=0.50
+Assume that the murder rate among mothers is 1 in 1,000,000.
+
+Pr(mother is a murderer)=1/1,000,000
+According to Bayes' rule, what is the probability of:
+
+Pr(mother is a murderer | two children found dead with no evidence of harm)
+
+**Instructions**
+
+Use Bayes' rule to calculate the probability that the mother is a murderer, considering the rates of murdering mothers in the population, the probability that two siblings die of SIDS, and the probability that a murderer kills children without leaving evidence of physical harm.
+
+**Code**
+```{r}
+# Define `Pr_1` as the probability of the first son dying of SIDS
+Pr_1 <- 1/8500
+
+# Define `Pr_2` as the probability of the second son dying of SIDS
+Pr_2 <- 1/100
+
+# Define `Pr_B` as the probability of both sons dying of SIDS
+Pr_B <- Pr_1*Pr_2
+
+# Define Pr_A as the rate of mothers that are murderers
+Pr_A <- 1/1000000
+
+# Define Pr_BA as the probability that two children die without evidence of harm, given that their mother is a murderer
+Pr_BA <- 0.50
+
+# Define Pr_AB as the probability that a mother is a murderer, given that her two children died with no evidence of physical harm. Print this value to the console.
+Pr_AB <- Pr_BA * Pr_A / Pr_B
+Pr_AB
+```
+
+#### Exercise 6 - Back to Election Polls
+Florida is one of the most closely watched states in the U.S. election because it has many electoral votes and the election is generally close. Create a table with the poll spread results from Florida taken during the last days before the election using the sample code.
+
+The CLT tells us that the average of these spreads is approximately normal. Calculate a spread average and provide an estimate of the standard error.
+
+**Instructions**
+
+* Calculate the average of the spreads. Call this average avg in the final table.
+* Calculate an estimate of the standard error of the spreads. Call this standard error se in the final table.
+* Use the mean and sd functions nested within summarize to find the average and standard deviation of the grouped spread data.
+
+**Code**
+```{r}
+# Load the libraries and poll data
+library(dplyr)
+library(dslabs)
+data(polls_us_election_2016)
+
+# Create an object 'polls' that contains the spread of predictions for each candidate in Florida during the last polling days
+polls <- polls_us_election_2016 %>% 
+  filter(state == "Florida" & enddate >= "2016-11-04" ) %>% 
+  mutate(spread = rawpoll_clinton/100 - rawpoll_trump/100)
+
+# Examine the 'polls' object using the 'head' function
+head(polls)
+
+# Create an object called 'results' that has two columns containing the average spread ('avg') and the standard error ('se'). Print the results to the console.
+results <- polls %>%
+  summarize(avg=mean(spread), se=sd(spread)/sqrt(n()))
+results
+```
+
+#### Exercise 7 - The Prior Distribution
+Assume a Bayesian model sets the prior distribution for Florida's election night spread d to be normal with expected value $\mu$ and standard deviation$ \tau$.
+
+What are the interpretations of $\mu$ and $\tau$ ?
+
+#### Exercise 8 - Estimate the Posterior Distribution
+The CLT tells us that our estimate of the spread $\hat{d}$ has a normal distribution with expected value $d$ and standard deviation $\sigma$ which we calculated in a previous exercise.
+
+Use the formulas for the posterior distribution to calculate the expected value of the posterior distribution if we set $\mu=0$ and $\tau=0.01$.
+
+**Instructions**
+
+* Define $\mu$ and $\tau$
+* Identify which elements stored in the object results represent $\sigma$ and Y
+* Estimate B using $\sigma$ and $\tau$
+* Estimate the posterior distribution using B, $\mu$, and Y
+
+**Code**
+```{r}
+# The results` object has already been loaded. Examine the values stored: `avg` and `se` of the spread
+results
+
+# Define `mu` and `tau`
+mu <- 0
+tau <- 0.01
+
+# Define a variable called `sigma` that contains the standard error in the object `results
+sigma <- results$se
+
+# Define a variable called `Y` that contains the average in the object `results`
+Y <- results$avg
+
+# Define a variable `B` using `sigma` and `tau`. Print this value to the console.
+B <- sigma^2 / (sigma^2 + tau^2)
+B
+
+# Calculate the expected value of the posterior distribution
+avg_post <- B * mu + (1-B) * Y
+avg_post
+```
+
+#### Exercise 9 - Standard Error of the Posterior Distribution
+Compute the standard error of the posterior distribution.
+
+**Instructions**
+
+* Using the variables we have defined so far, calculate the standard error of the posterior distribution.
+* Print this value to the console.
+
+**Code**
+```{r}
+# Here are the variables we have defined
+mu <- 0
+tau <- 0.01
+sigma <- results$se
+Y <- results$avg
+B <- sigma^2 / (sigma^2 + tau^2)
+
+# Compute the standard error of the posterior distribution. Print this value to the console.
+se_post <- sqrt(1/(1/sigma^2+1/tau^2))
+se_post
+```
+
+#### Exercise 10- Constructing a Credible Interval
+Using the fact that the posterior distribution is normal, create an interval that has a 95% of occurring centered at the posterior expected value. Note that we call these credible intervals.
+
+**Instructions**
+
+* Calculate the 95% credible intervals using the qnorm function.
+* Save the lower and upper confidence intervals as an object called ci. Save the lower confidence interval first.
+
+**Code**
+```{r}
+# Here are the variables we have defined in previous exercises
+mu <- 0
+tau <- 0.01
+sigma <- results$se
+Y <- results$avg
+B <- sigma^2 / (sigma^2 + tau^2)
+se <- sqrt( 1/ (1/sigma^2 + 1/tau^2))
+
+# Construct the 95% credible interval. Save the lower and then the upper confidence interval to a variable called `ci`.
+ci <- B * mu + (1-B) * Y + c(-qnorm(.975), qnorm(.975)) * se
+```
+
+#### Exercise 11 - Odds of Winning Florida
+According to this analysis, what was the probability that Trump wins Florida?
+
+**Code**
+```{r}
+# Assign the expected value of the posterior distribution to the variable `exp_value`
+exp_value <- B*mu + (1-B)*Y 
+
+# Assign the standard error of the posterior distribution to the variable `se`
+se <- sqrt( 1/ (1/sigma^2 + 1/tau^2))
+
+# Using the `pnorm` function, calculate the probability that the actual spread was less than 0 (in Trump's favor). Print this value to the console.
+pnorm(0, exp_value, se)
+pnorm(-exp_value/se)
+```
+
+#### Exercise 12 - Change the Priors
+We had set the prior variance ?? to 0.01, reflecting that these races are often close.
+
+Change the prior variance to include values ranging from 0.005 to 0.05 and observe how the probability of Trump winning Florida changes by making a plot.
+
+**Instructions**
+
+* Create a vector of values of taus by executing the sample code.
+* Create a function using function(){} called p_calc that first calculates B given tau and sigma and then calculates the probability of Trump winning, as we did in the previous exercise.
+* Apply your p_calc function across all the new values of taus.
+* Use the plot function to plot ?? on the x-axis and the new probabilities on the y-axis.
+
+**Code**
+```{r}
+# Define the variables from previous exercises
+mu <- 0
+sigma <- results$se
+Y <- results$avg
+
+# Define a variable `taus` as different values of tau
+taus <- seq(0.005, 0.05, len = 100)
+
+# Create a function called `p_calc` that generates `B` and calculates the probability of the spread being less than 0
+p_calc <- function(tau) {
+  B <- sigma^2 / (sigma^2+tau^2)
+  exp_value <- B*mu + (1-B)*Y 
+  se <- sqrt( 1/ (1/sigma^2 + 1/tau^2))
+  pnorm(-exp_value/se)
+}
+
+# Create a vector called `ps` by applying the function `p_calc` across values in `taus`
+ps <- sapply(taus, p_calc)
+
+# Plot `taus` on the x-axis and `ps` on the y-axis
+plot(taus, ps)
+```
+
+
+## 5.3 Assessment: Baysian Statistics
+
+### 5.3.1 Finding a missing airplane
+
+**Background**
+
+Bayesian search theory is the use of Bayes' Theorem to find lost objects. It has been used to find planes crashed at sea, sunken submarines, missing people and more. Prior assumptions about the probability of finding the object in various locations are continually revised as the search proceeds.
+
+A search team is tasked with finding a crashed plane. Their initial data suggest the plane is found somewhere within one of four areas with the following probabilities:
+
+Grid showing probabilities of the plane being in various areas of the map.  
+Areas A, B, C and D have respective probabilities of 0.2, 0.6, 0.15 and 0.05.
+
+The team can search one area per day and will always search the area with the highest probability. When the team searches an area, there is a 90% chance that they find a plane if one is present and a 10% chance that they overlook the plane. (There is always a 100% chance of not finding a plane if one is not present in the area.)
+
+Use Bayes' Theorem to determine where the team should search on the second day if necessary and the probability of finding the plane within 2 days.
+
+**Equation summary**
+
+$Pr(plane in A)=0.2$  
+$Pr(plane in B)=0.6$  
+$Pr(plane in C)=0.15$  
+$Pr(plane in D)=0.05$  
+$Pr(plane not found in area | plane in area)=0.1$  
+$Pr(plane not found in area | plane in different area)=1$  
+
+**Pre-exercise code**  
+Report your answers to 3 significant digits:
+
+```{r}
+options(digits = 3)
+A <- 0.2*0.9 / (0.1*0.6 + 0.4)
+B <- 0.1*0.6 / (0.1*0.6 + 0.4)
+C <- 0.15 / (0.1*0.6 + 0.4)
+c(A, B, C)
+```
+

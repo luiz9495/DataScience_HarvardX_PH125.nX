@@ -1,0 +1,15 @@
+---
+title: "Section 4: Gapminder"
+output: html_notebook
+---
+
+# Overview
+
+In Section 4, you will look at a case study involving data from the Gapminder Foundation about trends in world health and economics.
+
+After completing Section 4, you will:
+
+* understand how Hans Rosling and the Gapminder Foundation use effective data visualization to convey data-based trends.  
+* be able to apply the ggplot2 techniques from the previous section to answer questions using data.  
+* understand how fixed scales across plots can ease comparisons.
+be able to modify graphs to improve data visualization.  

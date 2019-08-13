@@ -1,0 +1,359 @@
+---
+title: "Section 3: Random Variables, Sampling Models, and the Central Limit Theorem"
+output: html_notebook
+---
+
+# 3.0 Overview
+
+
+Section 3 introduces you to Random Variables, Sampling Models, and the Central Limit Theorem.
+
+Section 3 is divided into two parts:
+
+* Random Variables and Sampling Models
+* The Central Limit Theorem.
+
+After completing Section 3, you will:
+
+* understand what random variables are, how to generate them, and the correct mathematical notation to use with them.
+* be able to use sampling models to estimate characteristics of a larger population.
+* be able to explain the difference between a distribution and a probability distribution.
+* understand the Central Limit Theorem and the law of large numbers.
+
+There are 2 assignments that use the DataCamp platform for you to practice your coding skills as well as a set of questions on the edX platform at the end of Section 3.  
+
+This section corresponds to the following section of the course textbook.  
+
+We encourage you to use R to interactively test out your answers and further your learning.
+
+
+# 3.1 Random Variables and Sampling Models
+
+## 3.1.1 Random Variables
+
+**Key points**
+
+* Random variables are numeric outcomes resulting from random processes.
+* Statistical inference offers a framework for quantifying uncertainty due to randomness.
+
+**Code: Modeling a random variable**
+
+```{r}
+# define random variable x to be 1 if blue, 0 otherwise
+beads <- rep(c("red", "blue"), times = c(2, 3))
+x <- ifelse(sample(beads, 1) == "blue", 1, 0)
+
+# demonstrate that the random variable is different every time
+ifelse(sample(beads, 1) == "blue", 1, 0)
+ifelse(sample(beads, 1) == "blue", 1, 0)
+ifelse(sample(beads, 1) == "blue", 1, 0)
+```
+
+## 3.1.2 Sampling Models
+
+**Key points**
+
+* A sampling model models the random behavior of a process as the sampling of draws from an urn.
+* The probability distribution of a random variable is the probability of the observed value falling in any given interval.
+* We can define a CDF  ????(????)=Pr(???????????)  to answer questions related to the probability of S being in any interval.
+* The average of many draws of a random variable is called its expected value.
+* The standard deviation of many draws of a random variable is called its standard error.
+
+**Monte Carlo simulation: Chance of casino losing money on roulette**
+
+We build a sampling model for the random variable  ????  that represents the casino's total winnings. 
+
+```{r}
+# sampling model 1: define urn, then sample
+color <- rep(c("Black", "Red", "Green"), c(18, 18, 2)) # define the urn for the sampling model
+n <- 1000
+X <- sample(ifelse(color == "Red", -1, 1), n, replace = TRUE)    # 1000 draws from urn, -1 if red, else +1
+X[1:10]    # first 10 outcomes
+
+# sampling model 2: define urn inside sample function by noting probabilities
+x <- sample(c(-1, 1), n, replace = TRUE, prob = c(9/19, 10/19))    # 1000 independent draws
+S <- sum(x)    # total winnings = sum of draws
+S
+```
+
+We use the sampling model to run a Monte Carlo simulation and use the results to estimate the probability of the casino losing money.
+
+```{r}
+n <- 1000    # number of roulette players
+B <- 10000    # number of Monte Carlo experiments
+S <- replicate(B, {
+    X <- sample(c(-1,1), n, replace = TRUE, prob = c(9/19, 10/19))    # simulate 1000 roulette spins
+    sum(X)    # determine total profit
+})
+
+mean(S < 0)    # probability of the casino losing money
+```
+
+We can plot a histogram of the observed values of S as well as the normal density curve based on the mean and standard deviation of S.
+
+```{r}
+library(tidyverse)
+
+s <- seq(min(S), max(S), length = 100)    # sequence of 100 values across range of S
+normal_density <- data.frame(s = s, f = dnorm(s, mean(S), sd(S))) # generate normal density for S
+data.frame (S = S) %>%    # make data frame of S for histogram
+    ggplot(aes(S, stat(density))) +
+    geom_histogram(color = "black", binwidth = 10) +
+    ylab("Probability") +
+    geom_line(data = normal_density, mapping = aes(s, f), color = "blue")
+```
+
+
+## 3.1.3 Distributions versus Probability Distributions
+
+* A random variable *X* has a probability distribution function *F(a)* that defines $Pr(X \le a)$ over all values of *a*.
+* Any list of numbers has a distribution. The probability distribution function of a random variable is defined mathematically and does not depend on a list of numbers.
+* The results of a Monte Carlo simulation with a large enough number of observations will approximate the probability distribution of *X*.
+* If a random variable is defined as draws from an urn:
+  + The probability distribution function of the random variable is defined as the distribution of the list of values in the urn.
+  + The expected value of the random variable is the average of values in the urn.
+  + The standard error of one draw of the random variable is the standard deviation of the values of the urn.
+
+
+## 3.1.4 Notation for Random Variables
+
+**Key points**
+
+* Capital letters denote random variables *(X)* and lowercase letters denote observed values *(x)*.
+* In the notation $Pr(X=x)$, we are asking how frequently the random variable *X* is equal to the value x . For example, if *x=6*, this statement becomes $Pr(X=6)$.
+
+
+## 3.1.5 Central Limit Theorem (CLT)
+
+**Key points**
+
+* The Central Limit Theorem (CLT) says that the distribution of the sum of a random variable is approximated by a normal distribution.
+* The expected value of a random variable, $E[X] = \mu$, is the average of the values in the urn. This represents the expectation of one draw. 
+* The standard error of one draw of a random variable is the standard deviation of the values in the urn.
+* The expected value of the sum of draws is the number of draws times the expected value of the random variable. 
+* The standard error of the sum of independent draws of a random variable is the square root of the number of draws times the standard deviation of the urn. 
+
+**Equations**  
+These equations apply to the case where there are only two outcomes, *a* and *b* with proportions *p* and *1-p* respectively. The general principles above also apply to random variables with more than two outcomes.
+
+*Expected value of a random variable: *
+$$ap + b(1-p)$$
+*Expected value of the sum of n draws of a random variable: *
+$$n*(ap + b(1-p))$$
+*Standard deviation of an urn with two values: *
+$$|b-a| \sqrt{p(1-p)}$$
+
+*Standard error of the sum of n draws of a random variable:*
+$$\sqrt{n}*|b-a| \sqrt{p(1-p)}$$
+
+## 3.1.6 Assessment
+
+### Exercise 1. American Roulette probabilities
+An American roulette wheel has 18 red, 18 black, and 2 green pockets. Each red and black pocket is associated with a number from 1 to 36. The two remaining green slots feature "0" and "00". Players place bets on which pocket they think a ball will land in after the wheel is spun. Players can bet on a specific number (0, 00, 1-36) or color (red, black, or green).
+
+What are the chances that the ball lands in a green pocket?
+
+*Instructions*
+
+* Define a variable p_green as the probability of the ball landing in a green pocket.
+* Print the value of p_green.
+
+*Code*
+```{r}
+# The variables `green`, `black`, and `red` contain the number of pockets for each color
+green <- 2
+black <- 18
+red <- 18
+
+# Assign a variable `p_green` as the probability of the ball landing in a green pocket
+p_green <- 2/38
+
+# Print the variable `p_green` to the console
+p_green
+```
+
+### Exercise 2. American Roulette payout
+In American roulette, the payout for winning on green is $17. This means that if you bet $1 and it lands on green, you get $17 as a prize.
+
+Create a model to predict your winnings from betting on green one time.
+
+*Instructions*
+
+* Use the sample function return a random value from a specified range of values.
+* Use the prob = argument in the sample function to specify a vector of probabilities for returning each of the values contained in the vector of values being sampled.
+* Take a single sample (n = 1).
+
+*Code*
+```{r}
+# Use the `set.seed` function to make sure your answer matches the expected result after random sampling.
+set.seed(1)
+
+# The variables 'green', 'black', and 'red' contain the number of pockets for each color
+green <- 2
+black <- 18
+red <- 18
+
+# Assign a variable `p_green` as the probability of the ball landing in a green pocket
+p_green <- green / (green+black+red)
+
+# Assign a variable `p_not_green` as the probability of the ball not landing in a green pocket
+p_not_green <- 1-p_green
+
+# Create a model to predict the random variable `X`, your winnings from betting on green. Sample one time.
+n <- 1
+X <- sample(c(17,-1,-1), n, replace=TRUE, prob=c(p_green, p_not_green/2, p_not_green/2))
+
+# Print the value of `X` to the console
+X
+
+```
+
+### Exercise 3. American Roulette expected value
+In American roulette, the payout for winning on green is $17. This means that if you bet $1 and it lands on green, you get $17 as a prize.In the previous exercise, you created a model to predict your winnings from betting on green.
+
+Now, compute the expected value of X, the random variable you generated previously.
+
+*Instructions*
+
+* Using the chances of winning $17 (p_green) and the chances of losing $1 (p_not_green), calculate the expected outcome of a bet that the ball will land in a green pocket.
+
+*Code*
+```{r}
+# The variables 'green', 'black', and 'red' contain the number of pockets for each color
+green <- 2
+black <- 18
+red <- 18
+
+# Assign a variable `p_green` as the probability of the ball landing in a green pocket
+p_green <- green / (green+black+red)
+
+# Assign a variable `p_not_green` as the probability of the ball not landing in a green pocket
+p_not_green <- 1-p_green
+
+# Calculate the expected outcome if you win $17 if the ball lands on green and you lose $1 if the ball doesn't land on green
+p_green * 17 + p_not_green *(-1)
+
+```
+
+### Exercise 4. American Roulette standard error
+The standard error of a random variable X tells us the difference between a random variable and its expected value. You calculated a random variable X in exercise 2 and the expected value of that random variable in exercise 3.
+
+Now, compute the standard error of that random variable, which represents a single outcome after one spin of the roulette wheel.
+
+*Instructions*
+
+* Compute the standard error of the random variable you generated in exercise 2, or the outcome of any one spin of the roulette wheel.
+* Recall that the payout for winning on green is $17 for a $1 bet.
+
+*Code*
+```{r}
+# The variables 'green', 'black', and 'red' contain the number of pockets for each color
+green <- 2
+black <- 18
+red <- 18
+
+# Assign a variable `p_green` as the probability of the ball landing in a green pocket
+p_green <- green / (green+black+red)
+
+# Assign a variable `p_not_green` as the probability of the ball not landing in a green pocket
+p_not_green <- 1-p_green
+
+# Compute the standard error of the random variable
+abs(17 - (-1)) * sqrt(p_green * p_not_green)
+```
+
+### Exercise 5. American Roulette sum of winnings
+You modeled the outcome of a single spin of the roulette wheel, X, in exercise 2.
+Now create a random variable S that sums your winnings after betting on green 1,000 times.
+
+*Instructions*
+
+* Use set.seed to make sure the result of your random operation matches the expected answer for this problem.
+* Specify the number of times you want to sample from the possible outcomes.
+* Use the sample function to return a random value from a vector of possible values.
+* Be sure to assign a probability to each outcome and to indicate that you are sampling with replacement.
+
+*Code*
+```{r}
+# The variables 'green', 'black', and 'red' contain the number of pockets for each color
+green <- 2
+black <- 18
+red <- 18
+
+# Assign a variable `p_green` as the probability of the ball landing in a green pocket
+p_green <- green / (green+black+red)
+
+# Assign a variable `p_not_green` as the probability of the ball not landing in a green pocket
+p_not_green <- 1-p_green
+
+# Use the `set.seed` function to make sure your answer matches the expected result after random sampling
+set.seed(1)
+
+# Define the number of bets using the variable 'n'
+n <- 1000
+
+# Create a vector called 'X' that contains the outcomes of 1000 samples
+X <- sample(c(17,-1,-1), n, replace=TRUE, prob=c(p_green,p_not_green/2,p_not_green/2))
+
+# Assign the sum of all 1000 outcomes to the variable 'S'
+S <- sum(X)
+
+# Print the value of 'S' to the console
+S
+```
+
+### Exercise 6. American Roulette winnings expected valu
+In the previous exercise, you generated a vector of random outcomes, S, after betting on green 1,000 times.
+What is the expected value of S?
+
+*Instructions*
+
+* Using the chances of winning $17 (p_green) and the chances of losing $1 (p_not_green), calculate the expected outcome of a bet that the ball will land in a green pocket over 1,000 bets.
+
+*Code*
+```{r}
+# The variables 'green', 'black', and 'red' contain the number of pockets for each color
+green <- 2
+black <- 18
+red <- 18
+
+# Assign a variable `p_green` as the probability of the ball landing in a green pocket
+p_green <- green / (green+black+red)
+
+# Assign a variable `p_not_green` as the probability of the ball not landing in a green pocket
+p_not_green <- 1-p_green
+
+# Define the number of bets using the variable 'n'
+n <- 1000
+
+# Calculate the expected outcome of 1,000 spins if you win $17 when the ball lands on green and you lose $1 when the ball doesn't land on green
+n * (p_green * 17 + p_not_green * (-1))
+```
+
+### Exercise 7. American Roulette winnings expected value
+You generated the expected value of S, the outcomes of 1,000 bets that the ball lands in the green pocket, in the previous exercise.
+What is the standard error of S?
+
+*Instructions*
+
+* Compute the standard error of the random variable you generated in exercise 5, or the outcomes of 1,000 spins of the roulette wheel.
+
+*Code*
+```{r}
+# The variables 'green', 'black', and 'red' contain the number of pockets for each color
+green <- 2
+black <- 18
+red <- 18
+
+# Assign a variable `p_green` as the probability of the ball landing in a green pocket
+p_green <- green / (green+black+red)
+
+# Assign a variable `p_not_green` as the probability of the ball not landing in a green pocket
+p_not_green <- 1-p_green
+
+# Define the number of bets using the variable 'n'
+n <- 1000
+
+# Compute the standard error of the sum of 1,000 outcomes
+n * abs(17 - (-1)) * sqrt(p_green * p_not_green)
+```

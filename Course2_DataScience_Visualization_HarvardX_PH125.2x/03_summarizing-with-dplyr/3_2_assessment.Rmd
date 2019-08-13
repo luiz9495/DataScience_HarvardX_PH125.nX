@@ -1,0 +1,72 @@
+---
+title: "Section3 Assessment: Summarizing with dplyr"
+output: html_notebook
+---
+
+# Assessment: Summarizing with dplyr
+
+To practice our dplyr skills we will be working with data from the survey collected by the United States National Center for Health Statistics (NCHS). This center has conducted a series of health and nutrition surveys since the 1960’s.
+
+Starting in 1999, about 5,000 individuals of all ages have been interviewed every year and then they complete the health examination component of the survey. Part of this dataset is made available via the NHANES package which can be loaded this way:
+
+```{r}
+library(dplyr)
+library(NHANES)
+data(NHANES)
+```
+
+```{r}
+#mean(na_example, na.rm = TRUE)
+#sd(na_example, na.rm = TRUE)
+```
+
+```{r}
+# filter
+tab <- NHANES %>% filter(AgeDecade == " 20-29" & Gender == "female")
+
+# summarize, avg, stddev
+ref <- NHANES %>%
+      filter(AgeDecade == " 20-29" & Gender == "female") %>% 
+      summarize(average = mean(BPSysAve,na.rm=TRUE), standard_deviation = sd(BPSysAve,na.rm=TRUE))
+
+# dot placeholder
+ref_avg <- NHANES %>%
+  filter(AgeDecade == " 20-29" & Gender == "female") %>%
+  summarize(average = mean(BPSysAve, na.rm = TRUE), 
+            standard_deviation = sd(BPSysAve, na.rm=TRUE)) %>%
+  .$average
+
+# min and max
+min_max <- NHANES %>%
+      filter(AgeDecade == " 20-29"  & Gender == "female") %>%
+      summarize(min = min(BPSysAve, na.rm = TRUE), max = max(BPSysAve, na.rm = TRUE))
+
+# group_by:
+# compute the average and standard deviation of systolic blood pressure for females for each age group separately (age groups are contained in AgeDecade)
+##complete the line with group_by and summarize
+NHANES %>%
+      filter(Gender == "female") %>%
+      group_by(AgeDecade) %>%
+      summarize( average = mean(BPSysAve, na.rm = TRUE), 
+                 standard_deviation = sd(BPSysAve, na.rm=TRUE))
+
+# group_by example 3:
+# We can use group_by(AgeDecade, Gender) to group by both age decades and gender
+
+NHANES %>%
+      group_by(AgeDecade, Gender) %>%
+      summarize( average = mean(BPSysAve, na.rm = TRUE), 
+                 standard_deviation = sd(BPSysAve, na.rm=TRUE))
+
+# arrange:
+# we are going to explore differences in systolic blood pressure across races, as reported in the Race1 variable.
+# we will learn to use the arrange function to order the outcome acording to one variable.
+# NB: that this function can be used to order any table by a given outcome. Here is an example that arranges by systolic blood pressure.
+NHANES %>%
+      filter(AgeDecade == " 40-49"  & Gender == "male") %>%
+      group_by(Race1) %>%
+      summarize( average = mean(BPSysAve, na.rm = TRUE), 
+                 standard_deviation = sd(BPSysAve, na.rm=TRUE)) %>%
+      arrange(average)
+
+```

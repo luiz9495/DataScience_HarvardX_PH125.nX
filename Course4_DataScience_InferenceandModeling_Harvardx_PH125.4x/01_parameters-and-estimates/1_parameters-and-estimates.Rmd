@@ -1,0 +1,115 @@
+---
+title: "Data Science: Inference and Modeling - HarvardX: PH125.4x"
+output: html_notebook
+---
+
+# Section 1: Parameters and Estimates
+
+## 1.1 Overview
+
+Section 1 introduces you to parameters and estimates.
+
+After completing Section 1, you will be able to:
+
+* Understand how to use a sampling model to perform a poll.
+* Explain the terms population, parameter, and sample as they relate to statistical inference.
+* Use a sample to estimate the population proportion from the sample average.
+* Calculate the expected value and standard error of the sample average. 
+
+
+## 1.2 Parameters and Estimates
+
+### 1.2.1 Sampling Model Parameters and Estimates
+
+**Key points**
+
+* The task of statistical inference is to estimate an unknown population parameter using observed data from a sample.
+* In a sampling model, the collection of elements in the urn is called the population.
+* A *parameter* is a number that summarizes data for an entire *population*.
+* A *sample* is observed data from a subset of the population.
+* An *estimate* is a summary of the observed data about a parameter that we believe is informative. It is a data-driven guess of the population parameter.
+* We want to predict the proportion of the blue beads in the urn, the parameter *p*. The proportion of red beads in the urn is *1-p* and the spread is *2p-1*.
+* The sample proportion is a random variable. Sampling gives random results drawn from the population distribution.
+
+**Code: Function for taking a random draw from a specific urn**
+
+The dslabs package includes a function for taking a random draw of size  ????  from the urn described in the video:
+```{r}
+library(tidyverse)
+library(dslabs)
+take_poll(25)    # draw 25 beads
+```
+
+### 1.2.2 The Sample Average
+
+**Key points**
+
+* Many common data science tasks can be framed as estimating a parameter from a sample.
+* We illustrate statistical inference by walking through the process to estimate *p*. From the estimate of *p*, we can easily calculate an estimate of the spread, *2p-1*.
+* Consider the random variable *X* that is 1 if a blue bead is chosen and 0 if a red bead is chosen. The proportion of blue beads in *N* draws is the average of the draws $X_1,...,X_n$.
+* $\bar{X}$ is the *sample average*. In statistics, a bar on top of a symbol denotes the average. $\bar{X}$ is a random variable because it is the average of random draws - each time we take a sample, $\bar{X}$ is different.
+$$ \bar{X} = \frac{X_1+X_2...+X_n}{N}$$
+* The number of blue beads drawn in N draws, $N\bar{X}$, is *N* times the proportion of values in the urn. However, we do not know the true proportion: we are trying to estimate this parameter *p*.
+
+
+### 1.2.3 Polling vs Forecasting
+
+**Key points**
+
+* A poll taken in advance of an election estimates *p* for that moment, not for election day.
+* In order to predict election results, forecasters try to use early estimates of *p* to predict *p* on election day. We discuss some approaches in later sections.
+
+
+### 1.2.4 Properties of our Estimate
+
+***Key points**
+
+* When interpreting values of $\bar{X}$, it is important to remember that $\bar{X}$ is a random variable with an expected value and standard error that represents the sample proportion of positive events.
+* The expected value of $\bar{X}$ is the parameter of interest p. This follows from the fact that $\bar{X}$ is the sum of independent draws of a random variable times a constant *1/N* .
+$$ E[\bar{X}] = p $$
+* As the number of draws $N$ increases, the standard error of our estimate $\bar{X}$ decreases. The standard error of the average of $\bar{X}$ over $N$ draws is:
+$$ SE[\bar{X}] = \sqrt{\frac{p(1-p)}{N}} $$
+* In theory, we can get more accurate estimates of $p$ by increasing $N$ . In practice, there are limits on the size of $N$ due to costs, as well as other factors we discuss later.
+* We can also use other random variable equations to determine the expected value of the sum of draws $E[\bar{X}]$ and standard error of the sum of draws $SE[\bar{X}]$.
+$$ E[S] = Np $$
+$$ SE[S] = \sqrt{Np(1-p)} $$
+
+
+### 1.2.5 Assessment
+
+**Exercise 5. se versus p**
+Write a line of code that calculates the standard error se of a sample average when you poll 25 people in the population. Generate a sequence of 100 proportions of Democrats p that vary from 0 (no Democrats) to 1 (all Democrats).  
+Plot se versus p for the 100 different proportions.
+
+```{r}
+# `N` represents the number of people polled
+N <- 25
+
+# Create a variable `p` that contains 100 proportions ranging from 0 to 1 using the `seq` function
+p <- seq(0,1,length.out=100)
+
+# Create a variable `se` that contains the standard error of each sample average
+se <- sqrt(p*(1-p)/N)
+
+# Plot `p` on the x-axis and `se` on the y-axis
+plot(p, se)
+```
+
+**Exercise 6. Multiple plots of se versus p**
+Using the same code as in the previous exercise, create a for-loop that generates three plots of p versus se when the sample sizes equal N=25, N=100, and N=1000.
+
+```{r}
+# The vector `p` contains 100 proportions of Democrats ranging from 0 to 1 using the `seq` function
+p <- seq(0, 1, length = 100)
+
+# The vector `sample_sizes` contains the three sample sizes
+sample_sizes <- c(25, 100, 1000)
+
+# Write a for-loop that calculates the standard error `se` for every value of `p` for each of the three samples sizes `N` in the vector `sample_sizes`. Plot the three graphs, using the `ylim` argument to standardize the y-axis across all three plots.
+for (N in sample_sizes) {
+   # Create a variable `se` that contains the standard error of each sample average
+    se <- sqrt(p*(1-p)/N)
+    # Plot `p` on the x-axis and `se` on the y-axis
+    plot(p, se, ylim=c(0, 0.1))
+}
+```

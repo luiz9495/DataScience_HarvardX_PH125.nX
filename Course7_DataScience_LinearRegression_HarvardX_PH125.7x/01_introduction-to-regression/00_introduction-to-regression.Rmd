@@ -1,0 +1,249 @@
+---
+title: 'Data Science: Linear Regression - HarvardX: PH125.7x'
+author: 'Luiz Cunha'
+date: '2019-08-13'
+output: html_notebook
+---
+
+# Introduction and Welcome
+
+## Welcome to Data Science: Linear Regression!
+
+### Welcome to Data Science: Linear Regression!
+
+Welcome to *Data Science: Linear Regression!* We're excited to have you join us in this course, which is designed to teach you about linear regression, one of the most common statistical modeling approaches used in data science.
+
+This is the seventh course in the HarvardX Professional Certificate in Data Science, a series of courses that prepare you to do data analysis in R, from simple computations to machine learning. We assume that you have either taken the preceding courses in the series or that you are already familiar with the content covered in them.
+
+Linear regression is commonly used to quantify the relationship between two or more variables. It is also used to adjust for confounding. In this course, we cover how to implement linear regression and adjust for confounding in practice using R.
+
+In data science applications, it is very common to be interested in the relationship between two or more variables. The motivating case study we examine in this course relates to the data-driven approach used to construct baseball teams described in the book (and movie) Moneyball. We will try to determine which measured outcomes best predict baseball runs and to do this we'll use linear regression. 
+
+We will also examine confounding, where extraneous variables affect the relationship between two or more other variables, leading to spurious associations. Linear regression is a powerful technique for removing confounders, but it is not a magical process, and it is essential to understand when it is appropriate to use. You will learn when to use it in this course. 
+
+The class notes for this course series can be found in Professor Irizarry's freely available Introduction to Data Science book.
+
+**In this course, you will learn:**
+
+How linear regression was originally developed by Galton
+What confounding is and how to detect it
+How to examine the relationships between variables by implementing linear regression in R
+
+#### Course overview
+
+There are three major sections in this course: introduction to linear regression, linear models, and confounding.
+
+**Introduction to Linear Regression**
+
+In this section, you'll learn the basics of linear regression through this course's motivating example, the data-driven approach used to construct baseball teams. You'll also learn about correlation, the correlation coefficient, stratification, and the variance explained.
+
+**Linear Models**
+
+In this section, you'll learn about linear models. You'll learn about least squares estimates, multivariate regression, and several useful features of R, such as *tibbles, lm, do, and broom*. You'll learn how to apply regression to baseball to build a better offensive metric.
+
+**Confounding**
+
+In the final section of the course, you'll learn about confounding and several reasons that correlation is not the same as causation, such as spurious correlation, outliers, reversing cause and effect, and confounders. You'll also learn about Simpson's Paradox.
+
+
+# Section 1: Introduction to Regression
+
+## Overview
+
+In the **Introduction to Regression** section, you will learn the basics of linear regression.
+
+After completing this section, you will be able to:
+
+* Understand how Galton developed **linear regression**.
+* Calculate and interpret the **sample correlation**.
+* **Stratify** a dataset when appropriate.
+* Understand what a **bivariate normal distribution** is.
+* Explain what the term **variance explained** means.
+* Interpret the two **regression lines**.
+
+This section has three parts: **Baseball as a Motivating Example**, **Correlation**, and **Stratification and Variance Explained**.
+
+
+## 1.1 Baseball as a Motivation Example
+
+### 1.1.1 Motivating Example: Moneyball
+
+**Key points**
+
+* Bill James was the originator of the **sabermetrics**, the approach of using data to predict what outcomes best predicted if a team would win.
+
+### 1.1.2 Baseball Basics
+
+**Key points**
+
+* The goal of a baseball game is to score more runs (points) than the other team.
+* Each team has 9 batters who have an opportunity to hit a ball with a bat in a predetermined order. 
+* Each time a batter has an opportunity to bat, we call it a plate appearance (PA).
+* The PA ends with a binary outcome: the batter either makes an out (failure) and returns to the bench or the batter doesn???t (success) and can run around the bases, and potentially score a run (reach all 4 bases).
+* We are simplifying a bit, but there are five ways a batter can succeed (not make an out):
+  1. Bases on balls (BB): the pitcher fails to throw the ball through a predefined area considered to be hittable (the strike zone), so the batter is permitted to go to first base.
+  2. Single: the batter hits the ball and gets to first base.
+  3. Double (2B): the batter hits the ball and gets to second base.
+  4. Triple (3B): the batter hits the ball and gets to third base.
+  5. Home Run (HR): the batter hits the ball and goes all the way home and scores a run.
+* Historically, the batting average has been considered the most important offensive statistic. To define this average, we define a hit (H) and an at bat (AB). Singles, doubles, triples and home runs are hits. The fifth way to be successful, a walk (BB), is not a hit. An AB is the number of times you either get a hit or make an out; BBs are excluded. The batting average is simply H/AB and is considered the main measure of a success rate.
+
+
+### 1.1.3 Bases on Balls or Stolen Bases?
+
+**Key points**
+
+* The visualization of choice when exploring the relationship between two variables like home runs and runs is a scatterplot.
+
+**Code**
+
+Scatterplot of the relationship between HRs and runs
+```{r}
+library(Lahman)
+library(tidyverse)
+library(dslabs)
+ds_theme_set()
+
+Teams %>% filter(yearID %in% 1961:2001) %>%
+    mutate(HR_per_game = HR / G, R_per_game = R / G) %>%
+    ggplot(aes(HR_per_game, R_per_game)) + 
+    geom_point(alpha = 0.5)
+```
+
+
+Scatterplot of the relationship between stolen bases and runs
+```{r}
+Teams %>% filter(yearID %in% 1961:2001) %>%
+    mutate(SB_per_game = SB / G, R_per_game = R / G) %>%
+    ggplot(aes(SB_per_game, R_per_game)) + 
+    geom_point(alpha = 0.5)
+```
+
+Scatterplot of the relationship between bases on balls and runs
+```{r}
+Teams %>% filter(yearID %in% 1961:2001) %>%
+    mutate(BB_per_game = BB / G, R_per_game = R / G) %>%
+    ggplot(aes(BB_per_game, R_per_game)) + 
+    geom_point(alpha = 0.5)
+```
+
+Scatterplot of the relationship between at bats and runs
+```{r}
+Teams %>% filter(yearID %in% 1961:2001) %>%
+    mutate(AB_per_game = AB / G, R_per_game = R / G) %>%
+    ggplot(aes(AB_per_game, R_per_game)) + 
+    geom_point(alpha = 0.5)
+```
+
+Scatterplot of the relationship between fielding errors and wins
+```{r}
+Teams %>% filter(yearID %in% 1961:2001) %>%
+  mutate(win_rate = W / G, E_per_game = E / G) %>%
+  ggplot(aes(win_rate, E_per_game)) + 
+  geom_point(alpha = 0.5)
+```
+
+## 1.2 Correlation
+
+### 1.2.1 Correlation
+
+**Key points**
+
+* Galton tried to predict sons' heights based on fathers' heights.
+* The mean and standard errors are insufficient for describing an important characteristic of the data: the trend that the taller the father, the taller the son.
+* The correlation coefficient is an informative summary of how two variables move together that can be used to predict one variable using the other.
+
+**Code**
+```{r}
+# create the dataset
+library(tidyverse)
+library(HistData)
+data("GaltonFamilies")
+set.seed(1983)
+galton_heights <- GaltonFamilies %>%
+  filter(gender == "male") %>%
+  group_by(family) %>%
+  sample_n(1) %>%
+  ungroup() %>%
+  select(father, childHeight) %>%
+  rename(son = childHeight)
+
+# means and standard deviations
+galton_heights %>%
+    summarize(mean(father), sd(father), mean(son), sd(son))
+
+# scatterplot of father and son heights
+galton_heights %>%
+    ggplot(aes(father, son)) +
+    geom_point(alpha = 0.5)
+```
+
+
+
+### 1.2.2 Correlation Coefficient
+
+**Key points**
+
+* The correlation coefficient is defined for a list of pairs $(x_1, y_1), ..., (x_n, y_n)$ as the product of the standardized values: $\frac{x_i-\mu_x}{\sigma_x}*  \frac{y_i-\mu_y}{\sigma_y}$.
+* The correlation coefficient essentially conveys how two variables move together.
+* The correlation coefficient is always between -1 and 1.
+
+**Code**
+
+```{r}
+rho <- function(x,y) mean(scale(x)*scale(y))
+galton_heights %>% summarize(r = cor(father, son)) %>% pull(r)
+```
+
+### 1.2.3 Sample Correlation is a Random Variable
+
+**Key points**
+
+* The correlation that we compute and use as a summary is a random variable.
+* When interpreting correlations, it is important to remember that correlations derived from samples are estimates containing uncertainty.
+* Because the sample correlation is an average of independent draws, the central limit theorem applies. 
+
+**Code**
+```{r}
+# compute sample correlation
+R <- sample_n(galton_heights, 25, replace = TRUE) %>%
+    summarize(r = cor(father, son))
+R
+# Monte Carlo simulation to show distribution of sample correlation
+B <- 1000
+N <- 25
+R <- replicate(B, {
+    sample_n(galton_heights, N, replace = TRUE) %>%
+    summarize(r = cor(father, son)) %>%
+    pull(r)
+})
+qplot(R, geom = "histogram", binwidth = 0.05, color = I("black"))
+
+# expected value and standard error
+mean(R)
+sd(R)
+# QQ-plot to evaluate whether N is large enough
+data.frame(R) %>%
+    ggplot(aes(sample = R)) +
+    stat_qq() +
+    geom_abline(intercept = mean(R), slope = sqrt((1-mean(R)^2)/(N-2)))
+```
+
+### 1.2.4 Assessment: Correlation
+
+```{r}
+Teams %>% filter(yearID %in% 1961:2001) %>%
+    mutate(AB_per_game = AB / G, R_per_game = R / G) %>%
+    summarize(cor(AB_per_game, R_per_game))
+
+Teams %>% filter(yearID %in% 1961:2001) %>%
+    mutate(W_per_game = W / G, E_per_game = E / G) %>%
+    summarize(cor(W_per_game, E_per_game))
+
+Teams %>% filter(yearID %in% 1961:2001) %>%
+    mutate(X2B_per_game = X2B / G, X3B_per_game = X3B / G) %>%
+    summarize(cor(X2B_per_game, X3B_per_game))
+```
+
+
+## 1.3 Anscombe's Quartet/Stratification

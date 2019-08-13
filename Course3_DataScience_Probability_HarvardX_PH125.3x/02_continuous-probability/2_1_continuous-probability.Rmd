@@ -1,0 +1,250 @@
+---
+title: "Section 2: Continuous Probability"
+output: html_notebook
+---
+
+# 2.1 Continuous Probability
+
+
+## 2.1.1 Continuous Probability
+
+**Key points**
+
+* The *cumulative distribution function (CDF)* is a distribution function for continuous data *x* that reports the proportion of the data below *a* for all values of *a* :
+$$F(a) = Pr(x<=a)$$
+
+* The CDF is the *probability distribution function* for continuous variables. For example, to determine the probability that a male student is taller than 70.5 inches given a vector of male heights *x* , we can use the CDF:
+$$Pr(x>70.5) = 1-Pr(x<=70.5) = 1-F(70.5)$$
+
+* The probability that an observation is in between two values a,b is F(b)-F(a).
+
+**Code: Cumulative distribution function**
+
+Define *x* as male heights from the *dslabs* dataset:
+
+```{r}
+library(tidyverse)
+library(dslabs)
+data(heights)
+x <- heights %>% filter(sex=="Male") %>% pull(height)
+```
+
+Given a vector *x*, we can define a function for computing the CDF of *x* using:
+
+```{r}
+F <- function(a) mean(x <= a)
+
+1 - F(70)    # probability of male taller than 70 inches
+```
+
+
+## 2.1.2 Theoretical Distribution
+
+**Key points**
+
+* *pnorm(a, avg, s)* gives the value of the cumulative distribution function *F(a)*  for the normal distribution defined by average *avg* and standard deviation *s*.
+* We say that a random quantity is normally distributed with average *avg* and standard deviation *s* if the approximation *pnorm(a, avg, s)* holds for all values of a.
+* If we are willing to use the normal approximation for height, we can estimate the distribution simply from the mean and standard deviation of our values.
+* If we treat the height data as discrete rather than categorical, we see that the data are not very useful because integer values are more common than expected due to rounding. This is called *discretization*.
+* With rounded data, the normal approximation is particularly useful when computing probabilities of intervals of length 1 that include exactly one integer.
+
+**Code: Using pnorm to calculate probabilities**
+
+Given male heights *x*:
+```{r}
+library(tidyverse)
+library(dslabs)
+data(heights)
+x <- heights %>% filter(sex=="Male") %>% pull(height)
+```
+We can estimate the probability that a male is taller than 70.5 inches using:
+$$1 - pnorm(70.5, mean(x), sd(x))$$
+
+**Code: Discretization and the normal approximation**
+```{r}
+# plot distribution of exact heights in data
+plot(prop.table(table(x)), xlab = "a = Height in inches", ylab = "Pr(x = a)")
+
+# probabilities in actual data over length 1 ranges containing an integer
+mean(x <= 68.5) - mean(x <= 67.5)
+mean(x <= 69.5) - mean(x <= 68.5)
+mean(x <= 70.5) - mean(x <= 69.5)
+
+# probabilities in normal approximation match well
+pnorm(68.5, mean(x), sd(x)) - pnorm(67.5, mean(x), sd(x))
+pnorm(69.5, mean(x), sd(x)) - pnorm(68.5, mean(x), sd(x))
+pnorm(70.5, mean(x), sd(x)) - pnorm(69.5, mean(x), sd(x))
+
+# probabilities in actual data over other ranges don't match normal approx as well
+mean(x <= 70.9) - mean(x <= 70.1)
+pnorm(70.9, mean(x), sd(x)) - pnorm(70.1, mean(x), sd(x))
+```
+
+
+## 2.1.3 Probability Density
+
+**Key points**
+
+* The probability of a single value is not defined for a continuous distribution.
+* The quantity with the most similar interpretation to the probability of a single value is the *probability density function f(x) *.
+* The *probability density f(x)*  is defined such that the integral of *f(x)*  over a range gives the CDF of that range.
+$$F(a) = Pr(X \le a) = \int_{-\infty}^{a} f(x) \; dx $$
+* In R, the probability density function for the normal distribution is given by *dnorm*. We will see uses of *dnorm* in the future.
+Note that *dnorm* gives the density function and *pnorm* gives the distribution function, which is the integral of the density function.
+
+## 2.1.4 Monte Carlo Simulations
+
+**Key points**
+
+* *rnorm(n, avg, s)* generates *n* random numbers from the normal distribution with average *avg* and standard deviation *s*.
+* By generating random numbers from the normal distribution, we can simulate height data with similar properties to our dataset. Here we generate simulated height data using the normal distribution.
+
+*Code: Generating normally distributed random numbers for Monte Carlo simulations*
+```{r}
+# define x as male heights from dslabs data
+library(tidyverse)
+library(dslabs)
+data(heights)
+x <- heights %>% filter(sex=="Male") %>% pull(height)
+
+# generate simulated height data using normal distribution - both datasets should have n observations
+n <- length(x)
+avg <- mean(x)
+s <- sd(x)
+simulated_heights <- rnorm(n, avg, s)
+
+# plot distribution of simulated_heights
+data.frame(simulated_heights = simulated_heights) %>%
+    ggplot(aes(simulated_heights)) +
+    geom_histogram(color="black", binwidth = 2)
+```
+
+*Code: Monte Carlo simulation of probability of tallest person being over 7 feet*
+```{r}
+B <- 10000
+tallest <- replicate(B, {
+    simulated_data <- rnorm(800, avg, s)    # generate 800 normally distributed random heights
+    max(simulated_data)    # determine the tallest height 
+})
+mean(tallest >= 7*12)    # proportion of times that tallest person exceeded 7 feet (84 inches)
+```
+
+
+## 2.1.5 Other Continuous Distributions
+
+**Key points**
+
+* You may encounter other continuous distributions (Student t, chi-squared, exponential, gamma, beta, etc.).
+* R provides functions for density (*d*), quantile (*q*), probability distribution (*p*) and random number generation (*r*) for many of these distributions.
+* Each distribution has a matching abbreviation (for example, *norm* or *t*) that is paired with the related function abbreviations *(d, p, q, r)* to create appropriate functions.
+For example, use *rt* to generate random numbers for a Monte Carlo simulation using the Student t distribution.
+
+**Code: Plotting the normal distribution with dnorm**
+
+Use d to plot the density function of a continuous distribution. Here is the density function for the normal distribution (abbreviation norm):
+```{r}
+x <- seq(-4, 4, length.out = 100)
+data.frame(x, f = dnorm(x)) %>%
+    ggplot(aes(x,f)) +
+    geom_line()
+```
+
+
+## 2.1.6 Assessment
+
+
+### Exercise 1. Distribution of female heights - 1
+Assume the distribution of female heights is approximated by a normal distribution with a mean of 64 inches and a standard deviation of 3 inches. If we pick a female at random, what is the probability that she is 5 feet or shorter?
+
+*Instructions*
+??? Use ???pnorm???
+
+*Code*
+```{r}
+# Assign a variable 'female_avg' as the average female height.
+female_avg <- 64
+
+# Assign a variable 'female_sd' as the standard deviation for female heights.
+female_sd <- 3
+
+# Using variables 'female_avg' and 'female_sd', calculate the probability that a randomly selected female is shorter than 5 feet. Print this value to the console.
+p5 <- pnorm((5*12-female_avg)/female_sd)
+p5
+```
+
+### Exercise 2. Distribution of female heights - 2
+Assume the distribution of female heights is approximated by a normal distribution with a mean of 64 inches and a standard deviation of 3 inches. If we pick a female at random, what is the probability that she is 6 feet or taller?
+
+*Instructions*
+
+*Code*
+```{r}
+p6 <- 1-pnorm((6*12-female_avg)/female_sd)
+p6
+```
+
+### Exercise 3. Distribution of female heights - 3
+Assume the distribution of female heights is approximated by a normal distribution with a mean of 64 inches and a standard deviation of 3 inches. If we pick a female at random, what is the probability that she is between 61 and 67 inches?
+
+*Instructions*
+
+*Code*
+```{r}
+p3 <- pnorm((67-female_avg)/female_sd) - pnorm((61-female_avg)/female_sd)
+p3
+```
+
+### Exercise 4. Distribution of female heights - 4
+Repeat the previous exercise, but convert everything to centimeters. That is, multiply every height, including the standard deviation, by 2.54. What is the answer now?
+
+*Instructions*
+
+*Code*
+```{r}
+p4 <- pnorm((67-female_avg)/female_sd) - pnorm((61-female_avg)/female_sd)
+p4
+```
+
+### Exercise 5. Probability of 1 SD from average 0
+Compute the probability that the height of a randomly chosen female is within 1 SD from the average height.
+
+*Instructions*
+
+*Code*
+```{r}
+p5 <- pnorm((67-female_avg)/female_sd) - pnorm((61-female_avg)/female_sd)
+p5
+```
+
+### Exercise 6. Distribution of male heights 0
+Imagine the distribution of male adults is approximately normal with an average of 69 inches and a standard deviation of 3 inches. How tall is a male in the 99th percentile?
+
+*Instructions*
+
+*Code*
+```{r}
+qnorm(0.99, 69, 3)
+```
+
+### Exercise 7. Distribution of IQ scores
+The distribution of IQ scores is approximately normally distributed. The average is 100 and the standard deviation is 15. Suppose you want to know the distribution of the person with the highest IQ in your school district, where 10,000 people are born each year.
+
+Generate 10,000 IQ scores 1,000 times using a Monte Carlo simulation. Make a histogram of the highest IQ scores.
+
+*Instructions*
+Use the function rnorm to generate a random distribution of 10,000 values with a given average and standard deviation.
+Use the function max to return the largest value from a supplied vector.
+Repeat the previous steps a total of 1,000 times. Store the vector of the top 1,000 IQ scores as highestIQ.
+Plot the histogram of values using the function hist
+
+*Code*
+```{r}
+B <- 1000
+n <- 10000
+avg <- 100
+sd <- 15
+
+highestIQ <- replicate(B,
+  max(rnorm(n, avg, sd)))
+hist(highestIQ)
+```

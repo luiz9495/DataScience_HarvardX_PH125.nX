@@ -1,0 +1,94 @@
+---
+title: "Section 1: Discrete Probability"
+output: html_notebook
+---
+
+# 1.1 Introduction to Discrete Probability
+
+## Monte Carlo Simulations
+
+**Key points**  
+* Monte Carlo simulations model the probability of different outcomes by repeating a random process a large enough number of times that the results are similar to what would be observed if the process were repeated forever.
+* The sample function draws random outcomes from a set of options.
+* The replicate function repeats lines of code a set number of times. It is used with sample and similar functions to run Monte Carlo simulations.
+
+**Code: The rep function and the sample function**
+```{r}
+beads <- rep(c("red", "blue"), times = c(2,3))    # create an urn with 2 red, 3 blue
+beads    # view beads object
+
+sample(beads, 1)    # sample 1 bead at random
+```
+
+**Code: Monte Carlo simulation**  
+Note that your exact outcome values will differ because the sampling is random.
+```{r}
+B <- 10000    # number of times to draw 1 bead
+events <- replicate(B, sample(beads, 1))    # draw 1 bead, B times
+tab <- table(events)    # make a table of outcome counts
+tab    # view count table
+prop.table(tab)    # view table of outcome proportions
+```
+
+
+## Setting the Random Seed
+
+**The set.seed function**  
+Before we continue, we will briefly explain the following important line of code:
+
+> set.seed(1986) 
+
+Throughout this book, we use random number generators. This implies that many of the results presented can actually change by chance, which then suggests that a frozen version of the book may show a different result than what you obtain when you try to code as shown in the book. This is actually fine since the results are random and change from time to time. However, if you want to to ensure that results are exactly the same every time you run them, you can set R???s random number generation seed to a specific number. Above we set it to 1986. We want to avoid using the same seed every time. A popular way to pick the seed is the year - month - day. For example, we picked 1986 on December 20, 2018:  2018 ??? 12 ??? 20 = 1986.
+
+You can learn more about setting the seed by looking at the documentation:
+
+> ?set.seed
+
+In the exercises, we may ask you to set the seed to assure that the results you obtain are exactly what we expect them to be.
+
+**Important note on seeds in R 3.5 and R 3.6**  
+R was recently updated to version 3.6 in early 2019. In this update, the default method for setting the seed changed. This means that exercises, videos, textbook excerpts and other code you encounter online may yield a different result based on your version of R.
+
+If you are running R 3.6, you can revert to the original seed setting behavior by adding the argument sample.kind="Rounding". For example:
+
+> set.seed(1)  
+set.seed(1, sample.kind="Rounding")    # will make R 3.6 generate a seed as in R 3.5
+
+Using the sample.kind="Rounding" argument will generate a message:
+
+> non-uniform 'Rounding' sampler used
+
+This is not a warning or a cause for alarm - it is a confirmation that R is using the alternate seed generation method, and you should expect to receive this message in your console.
+
+**If you use R 3.6, you should always use the second form of set.seed in this course series (outside of DataCamp assignments)**. Failure to do so may result in an otherwise correct answer being rejected by the grader. In most cases where a seed is required, you will be reminded of this fact.
+
+## An important application of the mean function
+
+In R, applying the mean function to a logical vector returns the proportion of elements that are TRUE. It is very common to use the mean function in this way to calculate probabilities and we will do so throughout the course.
+
+Suppose you have the vector beads from a previous video:
+
+> beads <- rep(c("red", "blue"), times = c(2,3))  
+beads  
+[1] "red" "red" "blue" "blue" "blue"
+
+To find the probability of drawing a blue bead at random, you can run:
+
+> mean(beads == "blue")  
+[1] 0.6
+
+This code is broken down into steps inside R. First, R evaluates the logical statement beads == "blue", which generates the vector:
+
+> FALSE FALSE TRUE TRUE TRUE
+
+When the mean function is applied, R coerces the logical values to numeric values, changing TRUE to 1 and FALSE to 0:
+
+> 0 0 1 1 1
+
+The mean of the zeros and ones thus gives the proportion of TRUE values. As we have learned and will continue to see, probabilities are directly related to the proportion of events that satisfy a requirement.
+
+## Probability Distributions
+...
+
+## Independence
+...

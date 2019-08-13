@@ -1,0 +1,646 @@
+---
+title: 'Data Science: Wrangling - HarvardX: PH125.6x'
+author: 'Luiz Cunha'
+date: '2019-08-12'
+output: html_notebook
+---
+
+# Section 2: Tidy Data
+
+## Overview
+
+In the **Tidy Data** section, you will learn how to convert data from a raw to a tidy format.
+
+This section is divided into three parts: **Reshaping Data**, **Combining Tables**, and **Web Scraping**. There are comprehension checks at the end of each part.
+
+After completing the **Tidy Data** section, you will be able to:
+
+* **Reshape data** using functions from the tidyr package, including gather, spread, separate, and unite.
+* Combine information from different tables using **join** functions from the dplyr package.
+* Combine information from different tables using **binding** functions from the dplyr package.
+Use **set operators** to combine data frames.
+Gather data from a website through **web scraping** and use of **CSS selectors**.
+
+
+## 2.1 Reshaping Data
+
+### 2.1.1 Tidy Data
+
+**Key points**
+
+In tidy data, each row represents an observation and each column represents a different variable.
+In wide data, each row includes several observations and one of the variables is stored in the header.
+
+**Code**
+
+```{r}
+library(tidyverse)
+library(dslabs)
+data(gapminder)
+
+# create and inspect a tidy data frame
+tidy_data <- gapminder %>% 
+  filter(country %in% c("South Korea", "Germany")) %>%
+  select(country, year, fertility)
+head(tidy_data)
+
+# plotting tidy data is simple
+tidy_data %>% 
+  ggplot(aes(year, fertility, color = country)) +
+  geom_point()
+
+# import and inspect example of original Gapminder data in wide format
+path <- system.file("extdata", package="dslabs")
+filename <- file.path(path,  "fertility-two-countries-example.csv")
+wide_data <- read_csv(filename)
+select(wide_data, country, `1960`:`1967`)
+```
+
+
+### 2.1.3 Reshaping Data
+
+**Key points**
+
+* The **tidyr** package includes several functions that are useful for tidying data.
+* The *gather* function converts wide data into tidy data.
+* The *spread* function converts tidy data to wide data.
+
+**Code**
+
+```{r}
+# original wide data
+library(tidyverse) 
+path <- system.file("extdata", package="dslabs")
+filename <- file.path(path,  "fertility-two-countries-example.csv")
+wide_data <- read_csv(filename)
+
+# tidy data from dslabs
+library(dslabs)
+data("gapminder")
+tidy_data <- gapminder %>% 
+  filter(country %in% c("South Korea", "Germany")) %>%
+  select(country, year, fertility)
+
+# gather wide data to make new tidy data
+new_tidy_data <- wide_data %>%
+  gather(year, fertility, `1960`:`2015`)
+head(new_tidy_data)
+
+# gather all columns except country
+new_tidy_data <- wide_data %>%
+  gather(year, fertility, -country)
+
+# gather treats column names as characters by default
+class(tidy_data$year)
+class(new_tidy_data$year)
+
+# convert gathered column names to numeric
+new_tidy_data <- wide_data %>%
+  gather(year, fertility, -country, convert = TRUE)
+class(new_tidy_data$year)
+
+# ggplot works on new tidy data
+new_tidy_data %>%
+  ggplot(aes(year, fertility, color = country)) +
+  geom_point()
+
+# spread tidy data to generate wide data
+new_wide_data <- new_tidy_data %>% spread(year, fertility)
+select(new_wide_data, country, `1960`:`1967`)
+```
+
+
+### 2.1.4 Separate and Unite
+
+**Key points**
+
+* The **separate** function splits one column into two or more columns at a specified character that separates the variables.
+* When there is an extra separation in some of the entries, use *fill="right"* to pad missing values with NAs, or use *extra="merge"* to keep extra elements together.
+* The **unite** function combines two columns and adds a separating character.
+
+**Code**
+```{r}
+# import data
+path <- system.file("extdata", package = "dslabs")
+filename <- file.path(path, "life-expectancy-and-fertility-two-countries-example.csv")
+raw_dat <- read_csv(filename)
+select(raw_dat, 1:5)
+
+# gather all columns except country
+dat <- raw_dat %>% gather(key, value, -country)
+head(dat)
+dat$key[1:5]
+
+# separate on underscores
+dat %>% separate(key, c("year", "variable_name"), "_")
+dat %>% separate(key, c("year", "variable_name"))
+
+# split on all underscores, pad empty cells with NA
+dat %>% separate(key, c("year", "first_variable_name", "second_variable_name"), 
+                 fill = "right")
+
+# split on first underscore but keep life_expectancy merged
+dat %>% separate(key, c("year", "variable_name"), sep = "_", extra = "merge")
+
+# separate then spread
+dat %>% separate(key, c("year", "variable_name"), sep = "_", extra = "merge") %>%
+  spread(variable_name, value) 
+
+# separate then unite
+dat %>% 
+  separate(key, c("year", "first_variable_name", "second_variable_name"), fill = "right") %>%
+  unite(variable_name, first_variable_name, second_variable_name, sep="_")
+
+# full code for tidying data
+dat %>% 
+  separate(key, c("year", "first_variable_name", "second_variable_name"), fill = "right") %>%
+  unite(variable_name, first_variable_name, second_variable_name, sep="_") %>%
+  spread(variable_name, value) %>%
+  rename(fertility = fertility_NA)
+```
+
+
+### 2.1.5 Assessment Part 1: Reshaping Data
+
+Part 1 consists of 8 questions are conceptual questions about tidy data and reshaping data. They do not necessarily require R, but you may benefit from checking your work on the console.
+
+#### Question 1
+...
+
+### 2.1.6 Assessment Part 2: Reshaping Data
+
+Part 2 consists of 7 questions which require you to write code in R to apply the new concepts about tidy data and reshaping data.
+
+```{r}
+library(tidyverse)
+library(dslabs)
+```
+
+#### Question 9
+
+Examine the built-in dataset $co2$. Is co2 tidy? Why or why not?
+
+```{r}
+data(co2)
+?co2
+
+#A: co2 is not tidy: to be tidy we would have to wrangle it to have three columns (year, month and value), and then each co2 observation would have a row.
+```
+
+#### Question 10
+Run the following command to define the co2_wide object:
+```{r}
+co2_wide <- data.frame(matrix(co2, ncol = 12, byrow = TRUE)) %>% 
+      setNames(1:12) %>%
+    mutate(year = as.character(1959:1997))
+```
+
+Use the *gather* function to make this dataset tidy. Call the column with the CO2 measurements *co2* and call the month column *month*. Name the resulting object *co2_tidy*.
+
+Which code would return the correct tidy format?
+```{r}
+co2_tidy <- gather(co2_wide,month,co2,-year)
+co2_tidy
+```
+
+#### Question 11
+Use *co2_tidy* to plot CO2 versus month with a different curve for each year:
+
+```{r}
+co2_tidy %>% 
+    ggplot(aes(as.numeric(month), co2, color = year)) + 
+    geom_line()
+```
+
+Use the *gather* function to make this dataset tidy. Call the column with the CO2 measurements *co2* and call the month column *month*. Name the resulting object *co2_tidy*.
+
+What can be concluded from this plot?  
+A: CO2 concentrations are highest around May and the yearly average increased from 1959 to 1997.
+
+#### Question 12
+Load the built-in admissions dataset, which contains college admission information for men and women across six majors, and remove the applicants percentage column:
+```{r}
+library(dslabs)
+data(admissions)
+dat <- admissions %>% select(-applicants)
+```
+
+Your goal is to get the data in the shape that has one row for each major, like this:
+>  
+major  men   women  
+A      62    82		
+B      63    68		
+C      37    34		
+D      33    35		
+E      28    24		
+F       6     7	
+
+Which command could help you to wrangle the data into the desired format?
+```{r}
+dat_tidy <- spread(dat, gender, admitted)
+dat_tidy
+```
+
+#### Question 13
+Now use the admissions dataset to create the object tmp, which has columns major, gender, key and value:
+```{r}
+tmp <- gather(admissions, key, value, admitted:applicants)
+tmp
+```
+
+Combine the key and gender and create a new column called *column_name* to get a variable with the following values: *admitted_men*, *admitted_women*, *applicants_men* and *applicants_women*. Save the new data as *tmp2*.
+
+Which command could help you to wrangle the data into the desired format?
+```{r}
+tmp2 <- unite(tmp, column_name, c(key, gender)) 
+tmp2
+```
+
+#### Question 14
+
+Q: Which function can reshape tmp2 to a table with six rows and five columns named major, admitted_men, admitted_women, applicants_men and applicants_women?  
+A: spread
+
+
+## 2.2 Combining Tables
+
+### 2.2.1 Combining Tables
+
+**Key points**
+
+* The **join functions** in the **dplyr** package combine two tables such that matching rows are together.
+* **left_join** only keeps rows that have information in the first table.
+* **right_join** only keeps rows that have information in the second table.
+* **inner_join** only keeps rows that have information in both tables.
+* **full_join** keeps all rows from both tables.
+* **semi_join** keeps the part of first table for which we have information in the second.
+* **anti_join** keeps the elements of the first table for which there is no information in the second.
+
+**Code**
+```{r}
+# import US murders data
+library(tidyverse)
+library(ggrepel)
+library(dslabs)
+ds_theme_set()
+data(murders)
+head(murders)
+
+# import US election results data
+data(polls_us_election_2016)
+head(results_us_election_2016)
+identical(results_us_election_2016$state, murders$state)
+
+# join the murders table and US election results table
+tab <- left_join(murders, results_us_election_2016, by = "state")
+head(tab)
+
+# plot electoral votes versus population
+tab %>% ggplot(aes(population/10^6, electoral_votes, label = abb)) +
+  geom_point() +
+  geom_text_repel() + 
+  scale_x_continuous(trans = "log2") +
+  scale_y_continuous(trans = "log2") +
+  geom_smooth(method = "lm", se = FALSE)
+
+# make two smaller tables to demonstrate joins
+tab1 <- slice(murders, 1:6) %>% select(state, population)
+tab1
+tab2 <- slice(results_us_election_2016, c(1:3, 5, 7:8)) %>% select(state, electoral_votes)
+tab2
+
+# experiment with different joins
+left_join(tab1, tab2)
+tab1 %>% left_join(tab2)
+tab1 %>% right_join(tab2)
+inner_join(tab1, tab2)
+semi_join(tab1, tab2)
+anti_join(tab1, tab2)
+```
+
+
+### 2.2.2 Binding
+
+**Key points**
+
+* Unlike the *join* function, the **binding** functions do not try to match by a variable, but rather just combine datasets.
+* **bind_cols** binds two objects by making them columns in a tibble. The R-base function **cbind** binds columns but makes a data frame or matrix instead.
+* **bind_rows** is similar but binds rows instead of columns. The R-base function *rbind* binds rows but makes a data frame or matrix instead.
+
+**Code**
+```{r}
+bind_cols(a = 1:3, b = 4:6)
+tab1 <- tab[, 1:3]
+tab2 <- tab[, 4:6]
+tab3 <- tab[, 7:9]
+new_tab <- bind_cols(tab1, tab2, tab3)
+head(new_tab)
+tab1 <- tab[1:2,]
+tab2 <- tab[3:4,]
+bind_rows(tab1, tab2)
+```
+
+### 2.2.3 Set Operators
+
+**Key points**
+
+* By default, the set operators in R-base work on vectors. If **tidyverse/dplyr** are loaded, they also work on data frames.
+* You can take intersections of vectors using intersect. This returns the elements common to both sets.
+* You can take the union of vectors using union. This returns the elements that are in either set.
+* The set difference between a first and second argument can be obtained with **setdiff**. Note that this function is not symmetric.
+* The function **set_equal** tells us if two sets are the same, regardless of the order of elements.
+
+**Code**
+```{r}
+# intersect vectors or data frames
+intersect(1:10, 6:15)
+intersect(c("a","b","c"), c("b","c","d"))
+tab1 <- tab[1:5,]
+tab2 <- tab[3:7,]
+intersect(tab1, tab2)
+
+# perform a union of vectors or data frames
+union(1:10, 6:15)
+union(c("a","b","c"), c("b","c","d"))
+tab1 <- tab[1:5,]
+tab2 <- tab[3:7,]
+union(tab1, tab2)
+
+# set difference of vectors or data frames
+setdiff(1:10, 6:15)
+setdiff(6:15, 1:10)
+tab1 <- tab[1:5,]
+tab2 <- tab[3:7,]
+setdiff(tab1, tab2)
+
+# setequal determines whether sets have the same elements, regardless of order
+setequal(1:5, 1:6)
+setequal(1:5, 5:1)
+setequal(tab1, tab2)
+```
+
+
+### 2.2.4 Assessment: Combining Tables
+
+#### Question 1
+You have created data frames *tab1* and *tab2* of state population and election data, similar to our module videos:
+```{r}
+tab1
+tab2
+
+c(dim(tab1), dim(tab2))
+# What are the dimensions of the table dat, created by the following command?
+dat <- left_join(tab1, tab2, by = 'state')
+```
+
+#### Question 2
+We are still using the tab1 and tab2 tables shown in question 1. What join command would create a new table "dat" with three rows and two columns?
+```{r}
+dat <- semi_join(tab1, tab2, by = 'state')
+```
+
+#### Question 3
+Which of the following are real differences between the join and bind functions?
+
+* T: Binding functions combine by position, while join functions match by variables.
+* T: Joining functions can join datasets of different dimensions, but the bind functions must match on the appropriate dimension (either same row or column numbers).
+* T: Bind functions can combine both vectors and dataframes, while join functions work for only for dataframes.
+* F: The join functions are a part of the dplyr package and have been optimized for speed, while the bind functions are inefficient base functions.
+
+#### Question 5-7
+
+Introduction to Questions 5-7
+Install and load the Lahman library. This library contains a variety of datasets related to US professional baseball. We will use this library for the next few questions and will discuss it more extensively in the Regression course. For now, focus on wrangling the data rather than understanding the statistics.
+
+The Batting data frame contains the offensive statistics for all baseball players over several seasons.  Filter this data frame to define top as the top 10 home run (HR) hitters in 2016:
+
+```{r}
+library(Lahman)
+top <- Batting %>% 
+  filter(yearID == 2016) %>%
+  arrange(desc(HR)) %>%    # arrange by descending HR count
+  slice(1:10)    # take entries 1-10
+top %>% as_tibble()
+```
+
+Also Inspect the Master data frame, which has demographic information for all players:
+```{r}
+Master %>% as_tibble()
+```
+
+#### Question 5
+Use the correct join or bind function to create a combined table of the names and statistics of the top 10 home run (HR) hitters for 2016. This table should have the player ID, first name, last name, and number of HR for the top 10 players. Name this data frame *top_names*.
+
+Identify the join or bind that fills the blank in this code to create the correct table:
+```{r eval=FALSE}
+top_names <- top %>% ___________________ %>%
+    select(playerID, nameFirst, nameLast, HR)
+# A: left_join(Master)
+```
+
+#### Question 6
+Inspect the *Salaries* data frame. Filter this data frame to the 2016 salaries, then use the correct bind join function to add a salary column to the top_names data frame from the previous question. Name the new data frame *top_salary*. Use this code framework:
+```{r eval=FALSE}
+top_salary <- Salaries %>% filter(yearID == 2016) %>%
+  ______________ %>%
+  select(nameFirst, nameLast, teamID, HR, salary)
+
+# Which bind or join function fills the blank to generate the correct table?
+# A: right_join(top_names)
+```
+
+#### Question 7
+Inspect the *AwardsPlayers* table. Filter awards to include only the year 2016.
+
+```{r}
+awards_2016 <- AwardsPlayers %>%
+    filter(yearID==2016) %>%
+    select(playerID)
+dim(awards_2016)
+```
+
+How many players out of the top 10 home run hitters won at least one award in 2016? (use a set operator)
+```{r}
+top %>%
+    select(playerID) %>%
+    setdiff(awards_2016) %>%
+    summarize(10-n())
+```
+
+How many players won an award in 2016 but were not one of the top 10 home run hitters in 2016? (use a set operator)
+```{r}
+top10 <- top %>% 
+    select(playerID)
+awards_2016 %>%
+    setdiff(top10) %>%
+    summarize(n())
+```
+
+
+## 2.3 Web Scraping
+
+### 2.3.1 Web Scraping
+
+**Key points**
+
+* Web scraping is extracting data from a website.
+* The *tidyverse* provides a web harvesting package called rvest.
+* The *rvest* package includes functions to extract nodes of an HTML document: html_nodes extracts all nodes of different types, and *html_node* extracts the first node.
+* *html_table* converts an HTML table to a data frame.
+
+**Code**
+```{r}
+# import a webpage into R
+library(tidyverse)    # loads rvest
+url <- "https://en.wikipedia.org/wiki/Murder_in_the_United_States_by_state"
+h <- read_html(url)
+class(h)
+h
+
+tab <- h %>% html_nodes("table")
+tab <- tab[[2]]
+
+tab <- tab %>% html_table
+class(tab)
+
+tab <- tab %>% setNames(c("state", "population", "total", "murder_rate"))
+head(tab)
+```
+
+
+### 2.3.2 CSS Selectors
+
+The default look of webpages made with the most basic HTML is quite unattractive. The aesthetically pleasing pages we see today are made using CSS. CSS is used to add style to webpages. The fact that all pages for a company have the same style is usually a result that they all use the same CSS file. The general way these CSS files work is by defining how each of the elements of a webpage will look. The title, headings, itemized lists, tables, and links, for example, each receive their own style including font, color, size, and distance from the margin, among others.
+
+To do this CSS leverages patterns used to define these elements, referred to as **selectors**. An example of pattern we used in a previous video is table but there are many many more. If we want to grab data from a webpage and we happen to know a selector that is unique to the part of the page, we can use the html_nodes function.
+
+However, knowing which selector to use can be quite complicated. To demonstrate this we will try to extract the recipe name, total preparation time, and list of ingredients from this guacamole recipe. Looking at the code for this page, it seems that the task is impossibly complex. However, selector gadgets actually make this possible. SelectorGadget is piece of software that allows you to interactively determine what CSS selector you need to extract specific components from the webpage. If you plan on scraping data other than tables, we highly recommend you install it. A Chrome extension is available which permits you to turn on the gadget highlighting parts of the page as you click through, showing the necessary selector to extract those segments.
+
+For the guacamole recipe page we already have done this and determined that we need the following selectors:
+```{r}
+h <- read_html("http://www.foodnetwork.com/recipes/alton-brown/guacamole-recipe-1940609")
+recipe <- h %>% html_node(".o-AssetTitle__a-HeadlineText") %>% html_text()
+prep_time <- h %>% html_node(".o-RecipeInfo__a-Description--Total") %>% html_text()
+ingredients <- h %>% html_nodes(".o-Ingredients__a-ListItemText") %>% html_text()
+```
+
+You can see how complex the selectors are. In any case we are now ready to extract what we want and create a list:
+```{r}
+guacamole <- list(recipe, prep_time, ingredients)
+guacamole
+```
+
+Since recipe pages from this website follow this general layout, we can use this code to create a function that extracts this information:
+```{r}
+get_recipe <- function(url){
+    h <- read_html(url)
+    recipe <- h %>% html_node(".o-AssetTitle__a-HeadlineText") %>% html_text()
+    prep_time <- h %>% html_node(".o-RecipeInfo__a-Description--Total") %>% html_text()
+    ingredients <- h %>% html_nodes(".o-Ingredients__a-ListItemText") %>% html_text()
+    return(list(recipe = recipe, prep_time = prep_time, ingredients = ingredients))
+}
+```
+
+and then use it on any of their webpages:
+```{r}
+get_recipe("http://www.foodnetwork.com/recipes/food-network-kitchen/pancakes-recipe-1913844")
+```
+
+There are several other powerful tools provided by rvest. For example, the functions **html_form**, **set_values**, and **submit_form** permit you to query a webpage from R. This is a more advanced topic not covered here.
+
+
+### 2.3.3 Assessment: Web Scraping
+
+#### Introduction: Questions 1-3
+Load the following web page, which contains information about Major League Baseball payrolls, into R: https://web.archive.org/web/20181024132313/http://www.stevetheump.com/Payrolls.htm
+
+```{r}
+library(rvest)
+url <- "https://web.archive.org/web/20181024132313/http://www.stevetheump.com/Payrolls.htm"
+h <- read_html(url)
+```
+
+We learned that tables in html are associated with the *table* node.  Use the *html_nodes* function and the *table* node type to extract the first table. Store it in an object *nodes*:
+```{r}
+nodes <- html_nodes(h, "table")
+```
+
+The *html_nodes* function returns a list of objects of class xml_node. We can see the content of each one using, for example, the *html_text* function. You can see the content for an arbitrarily picked component like this:
+```{r}
+html_text(nodes[[8]])
+```
+
+If the content of this object is an html table, we can use the html_table function to convert it to a data frame:
+```{r}
+html_table(nodes[[8]])
+```
+
+You will analyze the tables from this HTML page over questions 1-3.
+
+
+#### Question 1
+Many tables on this page are team payroll tables, with columns for rank, team, and one or more money values.
+
+Convert the first four tables in *nodes* to data frames and inspect them.
+
+```{r}
+#html_text(nodes[[1]])
+sapply(nodes[1:4], html_table)
+```
+
+Which of the first four *nodes* are tables of team payroll?
+A: 2,3,4
+
+#### Question 2
+For the last 3 components of *nodes*, which of the following are true? (Check all correct answers.)
+
+```{r}
+sapply(tail(nodes,3), html_table)
+```
+
+
+#### Question 3
+Create a table called *tab_1* using entry 10 of nodes. Create a table called *tab_2* using entry 19 of nodes.
+
+Note that the column names should be *c("Team", "Payroll", "Average")*. You can see that these column names are actually in the first data row of each table, and that tab_1 has an extra first column No. that should be removed so that the column names for both tables match.
+
+Remove the extra column in *tab_1*, remove the first row of each dataset, and change the column names for each table to *c("Team", "Payroll", "Average")*. Use a *full_join* by the *Team* to combine these two tables.
+
+How many rows are in the joined data table?
+```{r}
+tab_1 <- html_table(nodes[[10]])
+tab_2 <- html_table(nodes[[19]])
+col_names <- c("Team", "Payroll", "Average")
+tab_1 <- tab_1[-1, -1]
+tab_2 <- tab_2[-1,]
+names(tab_2) <- col_names
+names(tab_1) <- col_names
+full_join(tab_1,tab_2, by = "Team")
+```
+
+#### Introduction: Questions 4 and 5
+The Wikipedia page on opinion polling for the Brexit referendum, in which the United Kingdom voted to leave the European Union in June 2016, contains several tables. One table contains the results of all polls regarding the referendum over 2016:
+
+Use the **rvest** library to read the HTML from this Wikipedia page (make sure to copy both lines of the URL):
+```{r}
+library(rvest)
+library(tidyverse)
+url <- "https://en.wikipedia.org/w/index.php?title=Opinion_polling_for_the_United_Kingdom_European_Union_membership_referendum&oldid=896735054"
+```
+
+#### Question 4
+Assign tab to be the html nodes of the "table" class.  
+How many tables are in this Wikipedia page?
+```{r}
+tab <- read_html(url) %>% html_nodes(h, "table")
+length(tab)
+```
+
+#### Question 5
+Inspect the first several html tables using html_table with the argument *fill=TRUE* (you can read about this argument in the documentation). Find the first table that has 9 columns with the first column named "Date(s) conducted".  
+What is the first table number to have 9 columns where the first column is named "Date(s) conducted"?
+```{r}
+html_table(tab[[7]], fill=TRUE)
+tab[[7]] %>% html_table(fill = TRUE) %>% names()    # inspect column names
+```
+

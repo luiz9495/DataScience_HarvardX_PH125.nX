@@ -1,0 +1,150 @@
+---
+title: "Section 3: Random Variables, Sampling Models, and the Central Limit Theorem"
+output: html_notebook
+---
+
+# 3.0 Overview
+
+
+Section 3 introduces you to Random Variables, Sampling Models, and the Central Limit Theorem.
+
+Section 3 is divided into two parts:
+
+* Random Variables and Sampling Models
+* The Central Limit Theorem.
+
+After completing Section 3, you will:
+
+* understand what random variables are, how to generate them, and the correct mathematical notation to use with them.
+* be able to use sampling models to estimate characteristics of a larger population.
+* be able to explain the difference between a distribution and a probability distribution.
+* understand the Central Limit Theorem and the law of large numbers.
+
+There are 2 assignments that use the DataCamp platform for you to practice your coding skills as well as a set of questions on the edX platform at the end of Section 3.  
+
+This section corresponds to the following section of the course textbook.  
+
+We encourage you to use R to interactively test out your answers and further your learning.
+
+```{r}
+library(gtools)
+library(tidyverse)
+options(digits = 3)    # report 3 significant digits
+```
+
+# 3.3 Assessment
+
+## 3.3.1 Questions 1 and 2: SAT testing
+
+The SAT is a standardized college admissions test used in the United States. The following two multi-part questions will ask you some questions about SAT testing.
+
+An old version of the SAT college entrance exam had a -0.25 point penalty for every incorrect answer and awarded 1 point for a correct answer. The quantitative test consisted of 44 multiple-choice questions each with 5 answer choices. Suppose a student chooses answers by guessing for all questions on the test.
+
+```{r}
+p <- 1/5
+a <- 1
+b <- -1/4
+n <- 44
+
+mu <- a*p + b*(1-p)
+ 
+# 1.a:
+# What is the probability of guessing correctly for one question?
+p
+
+# 1.e:
+# Use the Central Limit Theorem to determine the probability that a guessing student scores 8 points or higher on the test.
+1-pnorm(8, n*mu, sqrt(n)*abs(a-b)*sqrt(p*(1-p)))
+
+# Set the seed to 21, then run a Monte Carlo simulation of 10,000 students guessing on the test.
+set.seed(1)
+B <- 10000
+
+S <- replicate(B, {
+  points <- sample(c(a,b), n, replace=TRUE, prob=c(p,1-p))
+  sum(points)
+})
+
+# 1.f:
+# What is the probability that a guessing student scores 8 points or higher?
+mean(S>=8)
+
+```
+
+The SAT was recently changed to reduce the number of multiple choice options from 5 to 4 and also to eliminate the penalty for guessing.
+
+```{r}
+p <- 1/4
+a <- 1
+b <- 0
+n <- 44
+
+mu <- a*p + b*(1-p)
+
+# 2.a:
+# Suppose that the number of multiple choice options is 4 and that there is no penalty for guessing - that is, an incorrect question gives a score of 0.
+# What is the expected value of the score when guessing on this new test?
+mu <- a*p + b*(1-p)
+n* mu
+
+# 2.b:
+# What is the probability of scoring over 30 when guessing?
+1-pnorm(30, n*mu, sqrt(n)*abs(a-b)*sqrt(p*(1-p)))
+
+# 2.c:
+# Consider a range of correct answer probabilities p <- seq(0.25, 0.95, 0.05) representing a range of student skills.
+# What is the lowest p such that the probability of scoring over 35 exceeds 80%?
+test <- function(p) {
+  mu <- a*p + b*(1-p)
+  1-pnorm(35, n*mu, sqrt(n)*abs(a-b)*sqrt(p*(1-p)))
+}
+
+p_ <- seq(0.25, 0.95, 0.05)
+res <- sapply(p_, test)
+
+min(p_[which(res > 0.8)])
+```
+
+## 3.3.2 Betting on Roulette
+
+A casino offers a House Special bet on roulette, which is a bet on five pockets (00, 0, 1, 2, 3) out of 38 total pockets. The bet pays out 6 to 1. In other words, a losing bet yields -\$1 and a successful bet yields \$6. A gambler wants to know the chance of losing money if he places 500 bets on the roulette House Special.
+
+```{r}
+p <- 5/38
+a <- 6
+b <- -1
+n <- 500
+```
+
+```{r}
+
+# 3.a:
+# expected value of the payout for one bet?
+mu <- p*a + (1-p) * b
+mu
+
+# 3.b:
+# stddev of the payout for one bet?
+sigma <- abs(a-b) * sqrt(p * (1-p))
+sigma
+
+# 3.c:
+# expected value of the average payout over 500 bets?
+n * mu
+
+# 3.d:
+# standard error of the average payout over 500 bets?
+sigma/sqrt(n)
+
+# 3.e:
+# expected value of the sum of 500 bets?
+n * mu
+
+# 3.f:
+# standard error of the sum of 500 bets?
+sqrt(n) * sigma
+
+# 3.g:
+# calculate the probability of losing money over 500 bets
+pnorm(0, n*mu, sqrt(n) * sigma)
+```

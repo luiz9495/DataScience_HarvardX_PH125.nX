@@ -1,0 +1,84 @@
+---
+title: "Section 4: Gapminder"
+output: html_notebook
+---
+
+# Overview
+
+In Section 4, you will look at a case study involving data from the Gapminder Foundation about trends in world health and economics.
+
+After completing Section 4, you will:
+
+* understand how Hans Rosling and the Gapminder Foundation use effective data visualization to convey data-based trends.  
+* be able to apply the ggplot2 techniques from the previous section to answer questions using data.  
+* understand how fixed scales across plots can ease comparisons.
+be able to modify graphs to improve data visualization.  
+
+# Introduction to Gapminder
+
+## Case Study: Trends in World Health and Economics
+
+**More about Gapminder**
+
+The original Gapminder TED talks are available and we encourage you to watch them.
+
+* The Best Stats You've Ever Seen  
+* New Insights on Poverty  
+
+You can also find more information and raw data (in addition to what we analyze in class) at https://www.gapminder.org/.
+
+**Key points**
+
+* Data visualization can be used to dispel common myths and educate the public and contradict sensationalist or outdated claims and stories.  
+* We will use real data to answer the following questions about world health and economics:  
+  + Is it still fair to consider the world as divided into the West and the developing world?  
+  + Has income inequality across countries worsened over the last 40 years?  
+
+
+## Gapminder Dataset
+
+**Key points**
+
+* A selection of world health and economics statistics from the Gapminder project can be found in the dslabs package as data(gapminder).  
+* Most people have misconceptions about world health and economics, which can be addressed by considering real data.  
+
+**Code**
+
+```{r}
+# load and inspect gapminder data
+library(dslabs)
+data(gapminder)
+head(gapminder)
+
+# compare infant mortality in Sri Lanka and Turkey
+gapminder %>%
+    filter(year == 2015 & country %in% c("Sri Lanka", "Turkey")) %>%
+    select(country, infant_mortality)
+```
+
+
+## Life Expectancy and Fertility Rates
+
+**Key points**
+
+* A prevalent worldview is that the world is divided into two groups of countries:  
+  + Western world: high life expectancy, low fertility rate  
+  + Developing world: lower life expectancy, higher fertility rate  
+* Gapminder data can be used to evaluate the validity of this view.  
+* A scatterplot of life expectancy versus fertility rate in 1962 suggests that this viewpoint was grounded in reality 50 years ago. Is it still the case today?  
+
+**Code**
+
+```{r}
+# basic scatterplot of life expectancy versus fertility
+ds_theme_set()    # set plot theme
+filter(gapminder, year == 1962) %>%
+    ggplot(aes(fertility, life_expectancy)) +
+    geom_point()
+
+# add color as continent
+filter(gapminder, year == 1962) %>%
+    ggplot(aes(fertility, life_expectancy, color = continent)) +
+    geom_point()
+```
+

@@ -1,0 +1,50 @@
+---
+title: 'Data Science: Wrangling - HarvardX: PH125.6x'
+author: 'Luiz Cunha'
+date: '2019-08-12'
+output: html_notebook
+---
+
+# Introduction 
+
+## Welcome to Data Science: Wrangling!
+
+### Welcome to Data Science: Wrangling!
+
+Welcome to Data Science: Wrangling! We're excited to have you join us in this course, which is designed to teach you data wrangling, **the process of converting raw data to the formats needed for further analysis.**
+
+In this course, we cover several standard steps of the data wrangling process like **importing data into R, tidying data, string processing, HTML parsing, working with dates and times, and text mining**. Rarely are all these wrangling steps necessary in a single analysis, but a data scientist will likely face them all at some point. 
+
+In a data science project, data are often not easily accessible. It's more likely for the data to be in a file, a database, or extracted from documents such as web pages, tweets, or PDFs. In these cases, the first step is to import the data into R and tidy the data, using the tidyverse package. The steps that convert data from its raw form to the tidy form are called data wrangling.
+
+**In this course, you will learn:**
+
+* How to import data into R from different file formats
+* How to scrape data from the web
+* How to tidy data using the tidyverse to better facilitate analysis
+* How to process strings with regular expressions (regex)
+* How to wrangle data using dplyr
+* How to work with dates and times as file formats
+* How to mine text
+
+### Course overview
+
+**Section 1: Data Import**  
+You will learn how to import data from different sources.
+
+**Section 2: Tidy Data**  
+You will learn the first pieces of converting data into a tidy format.
+
+**Section 3: String Processing**  
+You will learn how to process strings using regular expressions (regex).
+
+**Section 4: Dates, Times, and Text Mining**  
+You will learn how to work with dates and times as file formats and how to mine text.
+
+
+## Introduction to Wrangling
+
+**Key points**
+
+* The first step in data analysis is importing, tidying and cleaning the data. This is the process of data wrangling.
+* In this course, we cover several common steps of the data wrangling process: tidying data, string processing, html parsing, working with dates and times, and text mining.

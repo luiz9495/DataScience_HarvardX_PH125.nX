@@ -1,0 +1,192 @@
+---
+title: "Section 1: Discrete Probability"
+output: html_notebook
+---
+
+# 1.4 Assessment: Discrete Probability
+
+
+## 1.4.1 Introduction
+
+```{r}
+library(gtools)
+library(tidyverse)
+options(digits = 3)    # report 3 significant digits
+```
+
+**!!! ORDER and REPLACEMENT**
+
+* Cardinal:     with ORDER && with REPLACEMENT
+* Permutations: with ORDER && w/o  REPLACEMENT 
+* Combinations: w/o  ORDER && w/o  REPLACEMENT
+
+
+## 1.4.2 Question 1: Olympic Running
+
+```{r}
+medals <- permutations(8,3)
+nrow(medals)
+
+jamaica <- permutations(3,3)
+nrow(jamaica)
+
+pr_jamaica <- nrow(jamaica) / nrow(medals)
+pr_jamaica
+
+set.seed(1)
+results <- replicate(B, {
+    runners <- c("Jamaica", "Jamaica", "Jamaica", "USA", "Ecuador", "Netherlands", "France", "South Africa")
+    medals <- sample(runners, 3)
+    all(medals == "Jamaica")
+    })
+mean(results)
+```
+
+
+## 1.4.3 Question 2: Restaurant management
+
+A restaurant manager wants to advertise that his lunch special offers enough choices to eat different meals every day of the year. He doesn't think his current special actually allows that number of choices, but wants to change his special if needed to allow at least 365 choices.
+
+A meal at the restaurant includes 1 entree, 2 sides, and 1 drink. He currently offers a choice of 6 entrees, a choice of 2 sides from a list of 6 options, and a choice of 2 drinks.
+
+```{r}
+nb_meals <- nrow(combinations(6, 1)) * nrow(combinations(6, 2)) * 2
+nb_meals
+
+nb_meals2 <- nrow(combinations(6, 1)) * nrow(combinations(6, 2)) * 3
+nb_meals2
+
+nb_meals3 <- nrow(combinations(6, 1)) * nrow(combinations(6, 3)) * 3
+nb_meals3
+
+f_entrees <- function(n) {
+    n * nrow(combinations(6, 2)) * 3
+}
+
+combos <- sapply(seq(1,12), f_entrees)
+data.frame(entrees = 1:12, combos = combos) %>%
+  filter(combos > 365) %>%
+  min(.$entrees)
+
+f_sides <- function(n) {
+    6 * nrow(combinations(n, 2)) * 3
+}
+
+combos2 <- sapply(2:12, f_sides)
+data.frame(sides = 2:12, combos = combos2) %>%
+  filter(combos > 365) %>%
+  min(.$sides)
+
+```
+
+
+# 1.4.4 Question 3 and 4: Esophageal cancer and alcohol/tobacco use, part 1
+
+Case-control studies help determine whether certain exposures are associated with outcomes such as developing cancer. The built-in dataset esoph contains data from a case-control study in France comparing people with esophageal cancer (cases, counted in ncases) to people without esophageal cancer (controls, counted in ncontrols) that are carefully matched on a variety of demographic and medical characteristics. The study compares alcohol intake in grams per day (alcgp) and tobacco intake in grams per day (tobgp) across cases and controls grouped by age range (agegp).
+
+The dataset is available in base R and can be called with the variable name esoph:
+> head(esoph)
+
+You will be using this dataset to answer the following four multi-part questions (Questions 3-6).
+
+You may wish to use the tidyverse package:
+> library(tidyverse)
+
+```{r}
+str(esoph)
+
+#2length(unique(esoph$agegp)) * length(unique(esoph$alcgp)) * length(unique(esoph$tobgp))
+all_cases <- sum(esoph$ncases)
+all_cases
+
+all_controls <- sum(esoph$ncontrols)
+all_controls
+
+esoph %>%
+    filter(alcgp=='120+') %>%
+    summarize(ncases=sum(ncases), ncontrols=sum(ncontrols)) %>%
+    mutate(p_case = ncases / (ncases + ncontrols)) %>%
+    .$p_case
+
+esoph %>%
+    filter(alcgp=='0-39g/day') %>%
+    summarize(ncases=sum(ncases), ncontrols=sum(ncontrols)) %>%
+    mutate(p_case = ncases / (ncases + ncontrols)) %>%
+    .$p_case
+
+esoph %>%
+    filter(ncases>0, tobgp!="0-9g/day") %>%
+    summarize(smoker=sum(ncases)) %>%
+    mutate(p_smoker = smoker / all_cases) %>%
+    .$p_smoker
+
+esoph %>%
+    filter(ncontrols>0, tobgp!="0-9g/day") %>%
+    summarize(smoker=sum(ncontrols)) %>%
+    mutate(p_smoker = smoker / all_controls) %>%
+    .$p_smoker
+```
+
+
+# 1.4.5 Question 5 and 6: Esophageal cancer and alcohol/tobacco use, part 2
+
+```{r}
+alc_cases <- esoph %>%
+    filter(ncases>0, alcgp=="120+") %>%
+    pull(ncases) %>%
+    sum()
+
+alc_cases / all_cases
+
+tob_cases <- esoph %>%
+    filter(ncases>0, tobgp=="30+") %>%
+    pull(ncases) %>%
+    sum()
+
+tob_cases / all_cases
+
+alcANDtob_cases <- esoph %>%
+    filter(ncases>0, alcgp=="120+" & tobgp=="30+") %>%
+    pull(ncases) %>%
+    sum()
+
+alcANDtob_cases / all_cases
+
+alcORtob_cases <- esoph %>%
+    filter(ncases>0, alcgp=="120+" | tobgp=="30+") %>%
+    pull(ncases) %>%
+    sum()
+
+alcORtob_cases / all_cases
+
+alc_controls <- esoph %>%
+    filter(ncontrols>0, alcgp=="120+") %>%
+    pull(ncontrols) %>%
+    sum()
+
+alc_controls / all_controls
+
+tob_controls <- esoph %>%
+    filter(ncontrols>0, tobgp=="30+") %>%
+    pull(ncontrols) %>%
+    sum()
+
+tob_controls / all_controls
+
+alcANDtob_controls <- esoph %>%
+    filter(ncontrols>0, alcgp=="120+" & tobgp=="30+") %>%
+    pull(ncontrols) %>%
+    sum()
+
+alcANDtob_controls / all_controls
+
+alcORtob_controls <- esoph %>%
+    filter(ncontrols>0, alcgp=="120+" | tobgp=="30+") %>%
+    pull(ncontrols) %>%
+    sum()
+
+alcORtob_controls / all_controls
+
+
+```
+

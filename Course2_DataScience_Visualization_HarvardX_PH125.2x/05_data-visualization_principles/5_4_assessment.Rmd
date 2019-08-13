@@ -1,0 +1,108 @@
+---
+title: "Section 5: Data Visualization Principles"
+output: html_notebook
+---
+
+# Overview
+
+Section 5 covers some general principles that can serve as guides for effective data visualization.
+After completing Section 5, you will:
+
+* understand basic principles of effective data visualization.
+* understand the importance of keeping your goal in mind when deciding on a visualization approach.
+* understand principles for encoding data, including position, aligned lengths, angles, area, brightness, and color hue.
+* know when to include the number zero in visualizations.
+* be able to use techniques to ease comparisons, such as using common axes, putting visual cues to be compared adjacent to one another, and using color effectively.
+
+
+# 5.4 Assessment: Titanic Survival Exercises
+
+
+Put all your new skills together to perform exploratory data analysis on a classic machine learning dataset: Titanic survival!
+
+Background
+The Titanic was a British ocean liner that struck an iceberg and sunk on its maiden voyage in 1912 from the United Kingdom to New York. More than 1,500 of the estimated 2,224 passengers and crew died in the accident, making this one of the largest maritime disasters ever outside of war. The ship carried a wide range of passengers of all ages and both genders, from luxury travelers in first-class to immigrants in the lower classes. However, not all passengers were equally likely to survive the accident. We use real data about a selection of 891 passengers to learn who was on the Titanic and which passengers were more likely to survive.
+
+Libraries, Options, and Data 
+Define the titanic dataset starting from the titanic library with the following code:
+
+**Code: Question 2: Demographics of Titanic Passengers**
+```{r}
+options(digits = 3)    # report 3 significant digits
+library(tidyverse)
+library(titanic)
+
+titanic <- titanic_train %>%
+    select(Survived, Pclass, Sex, Age, SibSp, Parch, Fare) %>%
+    mutate(Survived = factor(Survived),
+           Pclass = factor(Pclass),
+           Sex = factor(Sex))
+
+titanic %>%
+  filter(!is.na(Age)) %>%
+  ggplot(aes(x=Age, ..count.., color=Sex)) +
+  geom_density()
+```
+
+**Code: Question 3: QQ-plot of Age Distribution**
+```{r}
+params <- titanic %>%
+    filter(!is.na(Age)) %>%
+    summarize(mean = mean(Age), sd = sd(Age))
+
+titanic %>% 
+  ggplot(aes(sample = Age)) +
+  geom_qq(dparams = params) +
+  geom_abline()
+    
+```
+
+
+**Code: Question 4: Survival by Sex**
+```{r}
+titanic %>% 
+  ggplot(aes(Survived, fill=Sex)) +
+  geom_bar()
+```
+
+
+**Code: Question 5: Survival by Age**
+```{r}
+titanic %>%
+  filter(!is.na(Age)) %>%
+  ggplot(aes(x=Age, ..count.., color=Survived)) +
+  geom_density(alpha=0.2)
+
+```
+
+
+**Code: Question 6: Survival by Fare**
+```{r}
+titanic %>%
+  filter(Fare>0) %>%
+  ggplot(aes(x=Survived, y=Fare)) +
+  scale_y_continuous(trans="log2") +
+  geom_boxplot() +
+  geom_jitter(width = 0.1, alpha = 0.2)
+#  geom_point(alpha=0.2)
+```
+
+
+*Code: Question 7: Survival by Passenger Class*
+
+The Pclass variable corresponds to the passenger class. Make three barplots.
+
+```{r}
+#For the first, make a basic barplot of passenger class filled by survival.
+titanic %>%
+  ggplot(aes(Pclass, fill=Survived)) +
+  geom_bar()
+
+# For the second, make the same barplot but use the argument position = position_fill() to show relative proportions in each group instead of counts.
+titanic %>%
+  ggplot(aes(Pclass, fill=Survived)) +
+  geom_bar(position=position_fill())
+
+# For the third, make a barplot of survival filled by passenger class using position = position_fill().
+
+```
