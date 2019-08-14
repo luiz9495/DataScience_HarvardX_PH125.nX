@@ -1,0 +1,178 @@
+---
+title: 'Data Science: Linear Regression - HarvardX: PH125.7x'
+author: 'Luiz Cunha'
+date: '2019-08-14'
+output: html_notebook
+---
+
+# Section 2: Linear Models
+
+## Assessment
+
+Game attendance in baseball varies partly as a function of how well a team is playing.
+
+Load the **Lahman** library. The **Teams** data frame contains an **attendance** column. This is the total attendance for the season. To calculate average attendance, divide by the number of games played, as follows:
+
+```{r}
+options(digits = 3)
+library(tidyverse)
+library(broom)
+library(Lahman)
+
+Teams_small <- Teams %>% 
+    filter(yearID %in% 1961:2001) %>% 
+    mutate(avg_attendance = attendance/G)
+```
+
+Use linear models to answer the following 3-part question about **Teams_small**.
+
+### Question 1
+
+#### Question 1a
+Use runs (R) per game to predict average attendance.  
+For every 1 run scored per game, attendance increases by how much?
+```{r}
+Teams_small %>%
+    mutate(R = R/G) %>%
+    lm( avg_attendance ~ R, data=.) %>%
+    tidy() %>%
+    filter(term=='R') %>%
+    .$estimate
+```
+
+Use home runs (HR) per game to predict average attendance.  
+For every 1 home run hit per game, attendance increases by how much?
+```{r}
+Teams_small %>%
+    mutate(HR = HR/G) %>%
+    lm( avg_attendance ~ HR, data=.) %>%
+    tidy() %>%
+    filter(term=='HR') %>%
+    .$estimate
+```
+
+#### Question 1b
+Use number of wins to predict attendance; do not normalize for number of games.  
+Q: For every game won in a season, how much does average attendance increase?
+
+Suppose a team won zero games in a season.  
+Q: Predict the average attendance.
+```{r}
+Teams_small %>%
+    group_by(yearID) %>%
+    lm( avg_attendance ~ W, data=.) %>%
+    .$coef
+```
+
+#### Question 1c
+Use year to predict average attendance.  
+How much does average attendance increase each year?
+```{r}
+Teams_small %>%
+    group_by(yearID) %>%
+    lm( avg_attendance ~ yearID, data=.) %>%
+    .$coef %>% .[2]
+```
+
+### Question 2
+Game wins, runs per game and home runs per game are positively correlated with attendance. We saw in the course material that runs per game and home runs per game are correlated with each other. Are wins and runs per game or wins and home runs per game correlated?
+
+What is the correlation coefficient for wins and runs per game?
+```{r}
+Teams_small %>%
+    mutate(R = R/G, HR = HR/G) %>%
+    summarize(cor = cor(W, R)) %>%
+    .$cor
+```
+
+What is the correlation coefficient for wins and home runs per game?
+```{r}
+Teams_small %>%
+    mutate(R = R/G, HR = HR/G) %>%
+    summarize(cor = cor(W, HR)) %>%
+    .$cor
+```
+
+### Question 3
+
+Stratify Teams_small by wins: divide number of wins by 10 and then round to the nearest integer. Keep only strata 5 through 10, which have 20 or more data points.
+
+Use the stratified dataset to answer this three-part question.
+```{r}
+Teams_3 <- Teams_small %>%
+    mutate(W_strata = round(W/10,0)) %>%
+    filter(W_strata >= 5 & W_strata <= 10 & n()>=20)
+```
+
+#### Question 3a
+How many observations are in the 8 win strata?
+```{r}
+Teams_3 %>%
+    filter(W_strata==8) %>%
+    summarize(n())
+```
+
+#### Question 3b
+Calculate the slope of the regression line predicting average attendance given runs per game for each of the win strata.  
+Which win stratum has the largest regression line slope?
+```{r}
+Teams_3 %>%
+    mutate(R = R/G) %>%
+    group_by(W_strata) %>%
+    do(tidy(lm(avg_attendance ~ R, data=.), conf.int = TRUE)) %>%
+    filter(term == 'R')
+```
+
+Calculate the slope of the regression line predicting average attendance given HR per game for each of the win strata.  
+Which win stratum has the largest regression line slope?
+```{r}
+Teams_3 %>%
+    mutate(HR = HR/G) %>%
+    group_by(W_strata) %>%
+    do(tidy(lm(avg_attendance ~ HR, data=.), conf.int = TRUE)) %>%
+    filter(term == 'HR')
+```
+
+### Question 4
+
+Fit a multivariate regression determining the effects of runs per game, home runs per game, wins, and year on average attendance.
+
+Q: What is the estimate of the effect of runs per game on average attendance?  
+Q: What is the estimate of the effect of home runs per game on average attendance?  
+Q: What is the estimate of the effect of number of wins in a season on average attendance?
+```{r}
+res4 <- Teams_small %>%
+    mutate(R = R/G, HR = HR/G) %>%
+    do(tidy(lm(avg_attendance ~ R + HR + W + yearID, data=.)))
+res4
+```
+
+### Question 5
+
+Use the multivariate regression model from Question 4. Suppose a team averaged 5 runs per game, 1.2 home runs per game, and won 80 games in a season.
+
+Q: What would this team's average attendance be in 2002?
+Q: What would this team's average attendance be in 1960?
+```{r}
+sum(res4$estimate * c(1,5,1.2,80,2002))
+sum(res4$estimate * c(1,5,1.2,80,1960))
+```
+
+### Question 6
+Use your model from Question 4 to predict average attendance for teams in 2002 in the original Teams data frame.  
+What is the correlation between the predicted attendance and actual attendance?
+```{r}
+fit <- Teams_small %>%
+    mutate(R = R/G, HR = HR/G) %>%
+    lm(avg_attendance ~ R + HR + W + yearID, data=.)
+
+data <- Teams %>% 
+    filter(yearID==2002) %>% 
+    mutate(R = R/G, HR = HR / G, avg_attendance = attendance / G)
+
+# prediction using fitted model and data
+avg_attendance_pred <- predict(fit, data)
+
+cor(avg_attendance_pred, data$avg_attendance)
+```
+

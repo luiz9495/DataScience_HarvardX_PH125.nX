@@ -1,0 +1,269 @@
+---
+title: "Data Science: Visualization"
+author: Luiz Cunha
+output: html_notebook
+---
+
+# Introduction
+
+## Introduction and Welcome
+
+### Welcome!
+
+Welcome to *Data Science: Visualization!* We're excited to have you join us in this course, which is designed to teach you data visualization techniques to communicate data-driven findings.
+
+This is the second in a series of courses in a Professional Certificate in Data Science program. The courses in the Professional Certificate program are designed to prepare you to do data analysis in R, from simple computations to machine learning. If you need a refresher of some basic R, check out Data Science: R Basics, the first course in this series.
+
+This course assumes you are comfortable with basic math, algebra, and logical operations. HarvardX has partnered with DataCamp for some assignments in R that allow you to program directly in a browser-based interface. Verified learners will have access to additional exercises to be completed on a local installation of R.
+
+Using a combination of a guided introduction through short video lectures and more independent in-depth exploration, you will get to practice your new R skills on real-life applications.
+
+The growing availability of informative datasets and software tools has led to increased reliance on data visualizations across many industries, academia, and government. Data visualization provides a powerful way to communicate data-driven findings, motivate analyses, or detect flaws. In this course, you will learn the basics of data visualization and exploratory data analysis. We will use three motivating examples and ggplot2, a data visualization package for the statistical programming language R, to code. To learn the very basics, we will start with a somewhat artificial example: heights reported by students. Then we will explore two case studies related to world health and economics and another in infectious disease trends in the United States. It is also important to note that mistakes, biases, systematic errors, and other unexpected problems often lead to data that should be handled with care. The fact that it can be difficult or impossible to notice an error just from the reported results makes data visualization particularly important. This course will explore how failure to discover these problems often leads to flawed analyses and false discoveries.
+
+**In this course, you will learn:**
+
+* Data visualization principles to better communicate data-driven findings
+* How to use ggplot2 to create custom plots
+* The weaknesses of several widely used plots and why you should avoid them
+
+#### Course overview
+
+**Section 1: Introduction to Data Visualization and Distributions**
+
+You will get started with data visualization and distributions in R.
+
+**Section 2: Introduction to ggplot2**
+
+You will learn how to use ggplot2 to create plots. 
+
+**Section 3: Summarizing with dplyr**
+
+You will learn how to summarize data using dplyr.
+
+**Section 4: Gapminder**
+
+You will see examples of ggplot2 and dplyr in action with the Gapminder dataset.
+
+**Section 5: Data Visualization Principles**
+
+You will learn general principles to guide you in developing effective data visualizations.
+
+
+# Section 1. Introduction to Data Visualization and Distributions
+
+## Overview
+
+Section 1 introduces you to Data Visualization and Distributions.
+
+After completing Section 1, you will:
+
+* understand the importance of data visualization for communicating data-driven findings.
+* be able to use distributions to summarize data.
+* be able to use the average and the standard deviation to understand the normal distribution.
+* be able to assess how well a normal distribution fits the data using a quantile-quantile plot.
+* be able to interpret data from a boxplot.
+
+## 1.1 Introduction to Data Visualization
+
+### 1.1.1 Introduction to Data Visualization
+
+**Key points**
+
+* Plots of data easily communicate information that is difficult to extract from tables of raw values.
+* Data visualization is a key component of exploratory data analysis (EDA), in which the properties of data are explored through visualization and summarization techniques.
+* Data visualization can help discover biases, systematic errors, mistakes and other unexpected problems in data before those data are incorporated into potentially flawed analysis.
+* This course covers the basics of data visualization and EDA in R using the **ggplot2** package and motivating examples from world health, economics and infectious disease.
+
+**Code**
+```{r}
+library(dslabs)
+data(murders)
+head(murders)
+```
+
+### 1.1.2 Introduction to Distributions
+
+**Key points**
+
+* The most basic statistical summary of a list of objects is its distribution.
+* We will learn ways to visualize and analyze distributions in the upcoming videos.
+* In some cases, data can be summarized by a two-number summary: the average and standard deviation. We will learn to use data visualization to determine when that is appropriate.
+
+### 1.1.3 Data Types
+
+**Key points**
+
+* Categorical data are variables that are defined by a small number of groups.
+  + Ordinal categorical data have an inherent order to the categories (mild/medium/hot, for example).
+  + Non-ordinal categorical data have no order to the categories.
+* Numerical data take a variety of numeric values.
+  + Continuous variables can take any value.
+  + Discrete variables are limited to sets of specific values.
+
+
+## 1.2 Introduction to Distributions
+
+### 1.2.1 Describe Heights to ET
+
+**Key points**
+
+* A distribution is a function or description that shows the possible values of a variable and how often those values occur.
+* For categorical variables, the distribution describes the proportions of each category.
+* A **frequency table** is the simplest way to show a categorical distribution. Use prop.table to convert a table of counts to a frequency table. Barplots display the distribution of categorical variables and are a way to visualize the information in frequency tables.
+* For continuous numerical data, reporting the frequency of each unique entry is not an effective summary as many or most values are unique. Instead, a distribution function is required.
+* The **cumulative distribution function (CDF)** is a function that reports the proportion of data below a value $a$ for all values of $a$: $F(a) = Pr(x \le a)$.
+* The proportion of observations between any two values  ????  and  ????  can be computed from the CDF as $F(b) - F(a)$.
+* A *histogram* divides data into non-overlapping bins of the same size and plots the counts of number of values that fall in that interval.
+
+**Code**
+```{r}
+# load the dataset
+library(dslabs)
+data(heights)
+
+# make a table of category proportions
+prop.table(table(heights$sex))
+```
+
+### 1.2.2 Smooth Density Plots
+
+**Key points**
+
+* *Smooth density plots* can be thought of as histograms where the bin width is extremely or infinitely small. The smoothing function makes estimates of the true continuous trend of the data given the available sample of data points.
+* The degree of smoothness can be controlled by an argument in the plotting function. (We will learn functions for plotting later.)
+* While the histogram is an assumption-free summary, the smooth density plot is shaped by assumptions and choices you make as a data analyst.
+* The y-axis is scaled so that the area under the density curve sums to 1. This means that interpreting values on the y-axis is not straightforward. To determine the proportion of data in between two values, compute the area under the smooth density curve in the region between those values.
+* An advantage of smooth densities over histograms is that densities are easier to compare visually.
+
+**A further note on histograms:** note that the choice of binwidth has a determinative effect on shape. There is no "true" choice for binwidth, and you can sometimes gain insights into the data by experimenting with binwidths.
+
+### 1.2.3 Assessment: Distributions
+...
+
+### 1.2.4 Normal Distribution
+
+**Key points**
+
+* The normal distribution:
+  + Is centered around one value, the mean
+  + Is symmetric around the mean
+  + Is defined completely by its mean ($\mu$) and standard deviation ($\sigma$)
+  + Always has the same proportion of observations within a given distance of the mean (for example, 95% within 2  ???? )
+* The standard deviation is the average distance between a value and the mean value.
+* Calculate the mean using the *mean* function.
+* Calculate the standard deviation using the *sd* function or manually. 
+* Standard units describe how many standard deviations a value is away from the mean. The z-score, or number of standard deviations an observation $x$ is away from the mean $\mu$: $$Z = \frac{x-\mu}{\sigma}$$
+* Compute standard units with the *scale* function.
+* **Important:** to calculate the proportion of values that meet a certain condition, use the mean function on a logical vector. Because TRUE is converted to 1 and FALSE is converted to 0, taking the mean of this vector yields the proportion of TRUE.
+
+**Equation for the normal distribution**
+
+The normal distribution is mathematically defined by the following formula for any mean $\mu$ and standard deviation $\sigma$:
+$$Pr(a \lt x \lt b) = \int_{a}^{b}\frac{1}{\sqrt{2\pi}\sigma}e^{-\frac{1}{2}(\frac{x-\mu}{\sigma})^2}$$
+
+**Code**
+```{r}
+# define x as vector of male heights
+library(tidyverse)
+library(dslabs)
+data(heights)
+index <- heights$sex=="Male"
+x <- heights$height[index]
+
+# calculate the mean and standard deviation manually
+average <- sum(x)/length(x)
+SD <- sqrt(sum(x - average)^2)/length(x)
+
+# built-in mean and sd functions - note that the audio and printed values disagree
+average <- mean(x)
+SD <- sd(x)
+c(average = average, SD = SD)
+
+# calculate standard units
+z <- scale(x)
+
+# calculate proportion of values within 2 SD of mean
+mean(abs(z) < 2)
+```
+
+**Note about the sd function:** The built-in R function *sd* calculates the standard deviation, but it divides by *length(x)-1* instead of *length(x)*. When the length of the list is large, this difference is negligible and you can use the built-in sd function. Otherwise, you should compute $\sigma$ by hand. For this course series, assume that you should use the *sd* function unless you are told not to do so.
+
+### 1.2.5 Assessment: Normal Distribution
+...
+
+## 1.3 Quantiles, Percentiles and Boxplots
+
+### 1.3.1 Quantile-Quantile Plots
+
+**Key points**
+
+* Quantile-quantile plots, or QQ-plots, are used to check whether distributions are well-approximated by a normal distribution.
+* Given a proportion $p$, the quantile $q$ is the value such that the proportion of values in the data below $q$ is $p$.
+* In a QQ-plot, the sample quantiles in the observed data are compared to the theoretical quantiles expected from the normal distribution. If the data are well-approximated by the normal distribution, then the points on the QQ-plot will fall near the identity line (sample = theoretical).
+* Calculate sample quantiles (observed quantiles) using the quantile function.
+* Calculate theoretical quantiles with the *qnorm* function. *qnorm* will calculate quantiles for the standard normal distribution ($\mu=0, \sigma=1$ ) by default, but it can calculate quantiles for any normal distribution given *mean* and *sd* arguments. We will learn more about *qnorm* in the probability course.
+* Note that we will learn alternate ways to make QQ-plots with less code later in the series.
+
+**Code**
+```{r}
+# define x and z
+library(tidyverse)
+library(dslabs)
+data(heights)
+index <- heights$sex=="Male"
+x <- heights$height[index]
+z <- scale(x)
+
+# proportion of data below 69.5
+mean(x <= 69.5)
+
+# calculate observed and theoretical quantiles
+p <- seq(0.05, 0.95, 0.05)
+observed_quantiles <- quantile(x, p)
+theoretical_quantiles <- qnorm(p, mean = mean(x), sd = sd(x))
+
+# make QQ-plot
+plot(theoretical_quantiles, observed_quantiles)
+abline(0,1)
+
+# make QQ-plot with scaled values
+observed_quantiles <- quantile(z, p)
+theoretical_quantiles <- qnorm(p) 
+plot(theoretical_quantiles, observed_quantiles)
+abline(0,1)
+```
+
+### 1.3.2 Percentiles
+
+**Key points**
+
+* Percentiles are the quantiles obtained when defining $p$ as  0.01,0.02,...,0.99 . They summarize the values at which a certain percent of the observations are equal to or less than that value.
+* The 50th percentile is also known as the median.
+* The *quartiles* are the 25th, 50th and 75th percentiles.
+
+### 1.3.3 Boxplots
+
+**Key points**
+
+* When data do not follow a normal distribution and cannot be succinctly summarized by only the mean and standard deviation, an alternative is to report a five-number summary: range (ignoring outliers) and the quartiles (25th, 50th, 75th percentile).
+* In a *boxplot*, the box is defined by the 25th and 75th percentiles and the median is a horizontal line through the box. The whiskers show the range excluding outliers, and outliers are plotted separately as individual points.
+* The *interquartile* range is the distance between the 25th and 75th percentiles.
+* Boxplots are particularly useful when comparing multiple distributions.
+* We discuss outliers in a later video.
+ 
+### 1.3.4 Assessment: Quantiles, percentiles, and boxplots
+...
+
+
+## 1.4 Exploratory Data Analysis
+
+### 1.4.1 Distribution of Female Heights
+
+**Key points**
+
+* If a distribution is not normal, it cannot be summarized with only the mean and standard deviation. Provide a histogram, smooth density or boxplot instead.
+* A plot can force us to see unexpected results that make us question the quality or implications of our data.
+
+### 1.4.2 Assessment: Robust Summaries with Outliers
+...
+

@@ -1,21 +1,95 @@
 ---
-title: "Section2: Introduction to ggplot2"
+title: "Data Science: Visualization"
+author: Luiz Cunha
 output: html_notebook
 ---
 
-# Customizing Plots
+# Section 2. Introduction to ggplot2
+
+## Overview
+
+In Section 2, you will learn how to create data visualizations in R using ggplot2.
+
+After completing Section 2, you will:
+
+* be able to use ggplot2 to create data visualizations in R.
+* be able to explain what the data component of a graph is.
+* be able to identify the geometry component of a graph and know when to use which type of geometry.
+* be able to explain what the aesthetic mapping component of a graph is.
+* be able to understand the scale component of a graph and select an appropriate scale component to use.
+
+```{r}
+library(tidyverse)
+```
+
+## 2.1 Basics of ggplot2
+
+## 2.1.1 ggplot2
+
+**Key points and notes**
+
+* Throughout the series, we will create plots with the **ggplot2** package. ggplot2 is part of the tidyverse, which you can load with library(tidyverse).
+* Note that you can also load ggplot2 alone using the command *library(ggplot2)*, instead of loading the entire tidyverse.
+* ggplot2 uses a *grammar of graphics* to break plots into building blocks that have intuitive syntax, making it easy to create relatively complex and aesthetically pleasing plots with relatively simple and readable code.
+* ggplot2 is designed to work exclusively with tidy data (rows are observations and columns are variables).
+* We recommend you keep a copy of the ggplot2 cheat sheet handy.
+
+### 2.1.2 Graph Components
+
+**Key points**
+
+* Plots in ggplot2 consist of 3 main components:  
+  + Data: The dataset being summarized  
+  + Geometry: The type of plot (scatterplot, boxplot, barplot, histogram, qqplot, smooth density, etc.)  
+  + Aesthetic mapping: Variables mapped to visual cues, such as x-axis and y-axis values and color  
+* There are additional components:  
+  + Scale
+  + Labels, Title, Legend
+  + Theme/Style  
+
+**Code**
+```{r}
+library(dslabs)
+data(murders)
+```
+
+### 2.1.3 Creating a new plot
+
+**Key points**
+
+* You can associate a dataset x with a ggplot object with any of the 3 commands:  
+  + ggplot(data = x)  
+  + ggplot(x)  
+  + x %>% ggplot()  
+* You can assign a ggplot object to a variable. If the object is not assigned to a variable, it will automatically be displayed.
+* You can display a ggplot object assigned to a variable by printing that variable.
+  
+**Code**
+```{r}
+ggplot(data = murders)
+```
+
+```{r}
+murders %>% ggplot
+```
+
+```{r}
+p <- ggplot(data = murders)
+class(p)
+print(p)    # this is equivalent to simply typing p
+```
+
+
+## 2.2 Customizing Plots
 
 ```{r}
 library(tidyverse)
 library(dslabs)
 data(murders)
-```
-
-```{r}
 p <- ggplot(data = murders)
 ```
 
-## Layers
+### 2.2.1 Layers
 
 **Key points**
 
@@ -49,7 +123,8 @@ p + geom_point(aes(population/10^6, total)) +
     geom_text(aes(population/10^6, total, label = abb))
 ```
 
-## Tinkering
+
+### 2.2.2 Tinkering
 
 **Key points**
 
@@ -85,7 +160,7 @@ p + geom_point(size = 3) +
 ```
 
 
-## Scales, Labels, and Colors
+### 2.2.3 Scales, Labels, and Colors
 
 **Key points**
 
@@ -174,7 +249,7 @@ p
 ```
 
 
-## Add-on Packages
+### 2.2.4 Add-on Packages
 
 **Key points**
 
@@ -226,7 +301,7 @@ murders %>%
 ```
 
 
-## Other Examples
+### 2.2.5 Other Examples
 
 **Key points**
 
@@ -301,4 +376,6 @@ library(gridExtra)
 grid.arrange(p1, p2, p3, ncol = 3)
 ```
 
+### 2.2.6 Assessment: Introduction to ggplot2
+...
 

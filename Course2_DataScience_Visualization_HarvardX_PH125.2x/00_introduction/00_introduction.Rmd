@@ -1,0 +1,49 @@
+---
+title: "Data Science: Visualization"
+author: Luiz Cunha
+output: html_notebook
+---
+
+# Introduction
+
+## Introduction and Welcome
+
+### Welcome!
+
+Welcome to *Data Science: Visualization!* We're excited to have you join us in this course, which is designed to teach you data visualization techniques to communicate data-driven findings.
+
+This is the second in a series of courses in a Professional Certificate in Data Science program. The courses in the Professional Certificate program are designed to prepare you to do data analysis in R, from simple computations to machine learning. If you need a refresher of some basic R, check out Data Science: R Basics, the first course in this series.
+
+This course assumes you are comfortable with basic math, algebra, and logical operations. HarvardX has partnered with DataCamp for some assignments in R that allow you to program directly in a browser-based interface. Verified learners will have access to additional exercises to be completed on a local installation of R.
+
+Using a combination of a guided introduction through short video lectures and more independent in-depth exploration, you will get to practice your new R skills on real-life applications.
+
+The growing availability of informative datasets and software tools has led to increased reliance on data visualizations across many industries, academia, and government. Data visualization provides a powerful way to communicate data-driven findings, motivate analyses, or detect flaws. In this course, you will learn the basics of data visualization and exploratory data analysis. We will use three motivating examples and ggplot2, a data visualization package for the statistical programming language R, to code. To learn the very basics, we will start with a somewhat artificial example: heights reported by students. Then we will explore two case studies related to world health and economics and another in infectious disease trends in the United States. It is also important to note that mistakes, biases, systematic errors, and other unexpected problems often lead to data that should be handled with care. The fact that it can be difficult or impossible to notice an error just from the reported results makes data visualization particularly important. This course will explore how failure to discover these problems often leads to flawed analyses and false discoveries.
+
+**In this course, you will learn:**
+
+* Data visualization principles to better communicate data-driven findings
+* How to use ggplot2 to create custom plots
+* The weaknesses of several widely used plots and why you should avoid them
+
+#### Course overview
+
+**Section 1: Introduction to Data Visualization and Distributions**
+
+You will get started with data visualization and distributions in R.
+
+**Section 2: Introduction to ggplot2**
+
+You will learn how to use ggplot2 to create plots. 
+
+**Section 3: Summarizing with dplyr**
+
+You will learn how to summarize data using dplyr.
+
+**Section 4: Gapminder**
+
+You will see examples of ggplot2 and dplyr in action with the Gapminder dataset.
+
+**Section 5: Data Visualization Principles**
+
+You will learn general principles to guide you in developing effective data visualizations.

@@ -246,4 +246,178 @@ Teams %>% filter(yearID %in% 1961:2001) %>%
 ```
 
 
-## 1.3 Anscombe's Quartet/Stratification
+## 1.3 Stratification and Variance Explained
+
+### 1.3.1 Anscombe's Quartet/Stratification
+
+**Key points**
+
+* Correlation is not always a good summary of the relationship between two variables.
+* The general idea of conditional expectation is that we stratify a population into groups and compute summaries in each group.
+* A practical way to improve the estimates of the conditional expectations is to define strata of with similar values of x.
+* If there is perfect correlation, the regression line predicts an increase that is the same number of SDs for both variables. If there is 0 correlation, then we don???t use x at all for the prediction and simply predict the average  ???????? . For values between 0 and 1, the prediction is somewhere in between. If the correlation is negative, we predict a reduction instead of an increase.
+
+**Code**
+```{r}
+# number of fathers with height 72 or 72.5 inches
+sum(galton_heights$father == 72)
+sum(galton_heights$father == 72.5)
+
+# predicted height of a son with a 72 inch tall father
+conditional_avg <- galton_heights %>%
+    filter(round(father) == 72) %>%
+    summarize(avg = mean(son)) %>%
+    pull(avg)
+conditional_avg
+
+# stratify fathers' heights to make a boxplot of son heights
+galton_heights %>% mutate(father_strata = factor(round(father))) %>%
+    ggplot(aes(father_strata, son)) +
+    geom_boxplot() +
+    geom_point()
+
+# center of each boxplot
+galton_heights %>%
+    mutate(father = round(father)) %>%
+    group_by(father) %>%
+    summarize(son_conditional_avg = mean(son)) %>%
+    ggplot(aes(father, son_conditional_avg)) +
+    geom_point()
+
+# calculate values to plot regression line on original data
+mu_x <- mean(galton_heights$father)
+mu_y <- mean(galton_heights$son)
+s_x <- sd(galton_heights$father)
+s_y <- sd(galton_heights$son)
+r <- cor(galton_heights$father, galton_heights$son)
+m <- r * s_y/s_x
+b <- mu_y - m*mu_x
+
+# add regression line to plot
+galton_heights %>%
+    ggplot(aes(father, son)) +
+    geom_point(alpha = 0.5) +
+    geom_abline(intercept = b, slope = m)
+```
+
+
+### 1.3.2 Bivariate Normal Distribution
+
+**Key points**
+
+* When a pair of random variables are approximated by the bivariate normal distribution, scatterplots look like ovals. They can be thin (high correlation) or circle-shaped (no correlation).
+* When two variables follow a bivariate normal distribution, computing the regression line is equivalent to computing conditional expectations.
+* We can obtain a much more stable estimate of the conditional expectation by finding the regression line and using it to make predictions.
+
+**Code**
+```{r}
+galton_heights %>%
+  mutate(z_father = round((father - mean(father)) / sd(father))) %>%
+  filter(z_father %in% -2:2) %>%
+  ggplot() +  
+  stat_qq(aes(sample = son)) +
+  facet_wrap( ~ z_father)
+```
+
+
+### 1.3.3 Variance Explained
+
+**Key points**
+
+* Conditioning on a random variable X can help to reduce variance of response variable Y.
+* The standard deviation of the conditional distribution is $SD(Y \mid X=x) = \sigma_y \sqrt{1-\rho^2}$, which is smaller than the standard deviation without conditioning $\sigma_y$.
+* Because variance is the standard deviation squared, the variance of the conditional distribution is $\sigma_y^2 (1-\rho^2)$.
+* In the statement "X explains such and such percent of the variability," the percent value refers to the variance. The variance decreases by $\rho^2$ percent.
+* The *variance explained* statement only makes sense when the data is approximated by a bivariate normal distribution.
+
+
+### 1.3.4 There are Two Regression Lines
+
+**Key point**
+
+* There are two different regression lines depending on whether we are taking the expectation of Y given X or taking the expectation of X given Y.
+
+**Code**
+```{r}
+# compute a regression line to predict the son's height from the father's height
+mu_x <- mean(galton_heights$father)
+mu_y <- mean(galton_heights$son)
+s_x <- sd(galton_heights$father)
+s_y <- sd(galton_heights$son)
+r <- cor(galton_heights$father, galton_heights$son)
+m_1 <-  r * s_y / s_x
+b_1 <- mu_y - m_1*mu_x
+
+# compute a regression line to predict the father's height from the son's height
+m_2 <-  r * s_x / s_y
+b_2 <- mu_x - m_2*mu_y
+```
+
+### Assessment: Stratification and Variance Explained, Part 1
+...
+
+### Assessment: Stratification and Variance Explained, Part 2
+
+In the second part of this assessment, you'll analyze a set of mother and daughter heights, also from GaltonFamilies.
+
+Define female_heights, a set of mother and daughter heights sampled from GaltonFamilies, as follows:
+
+```{r}
+options(digits=3)
+set.seed(1989) #if you are using R 3.5 or earlier
+library(HistData)
+data("GaltonFamilies")
+
+female_heights <- GaltonFamilies%>%     
+    filter(gender == "female") %>%     
+    group_by(family) %>%     
+    sample_n(1) %>%     
+    ungroup() %>%     
+    select(mother, childHeight) %>%     
+    rename(daughter = childHeight)
+```
+
+#### Question 8
+Calculate the mean and standard deviation of mothers' heights, the mean and standard deviation of daughters' heights, and the correlaton coefficient between mother and daughter heights.
+
+```{r}
+mu_m <- mean(female_heights$mother)
+mu_m
+sigma_m <- sd(female_heights$mother)
+
+mu_d <- mean(female_heights$daughter)
+sigma_d <- sd(female_heights$daughter)
+
+rho <- cor(female_heights$mother, female_heights$daughter)
+cor(female_heights$daughter, female_heights$mother)
+```
+
+#### Question 9
+Calculate the slope and intercept of the regression line predicting daughters' heights given mothers' heights. Given an increase in mother's height by 1 inch, how many inches is the daughter's height expected to change?
+
+```{r}
+# Slope of regression line predicting daughters' height from mothers' heights
+rho * sigma_d / sigma_m
+
+#Intercept of regression line predicting daughters' height from mothers' heights
+mu_d - rho * sigma_d / sigma_m * mu_m
+
+# Change in daughter's height in inches given a 1 inch increase in the mother's height
+rho * sigma_d / sigma_m
+```
+
+#### Question 10
+What percent of the variability in daughter heights is explained by the mother's height?
+A: $\rho^2 * 100$
+
+#### Question 11
+A mother has a height of 60 inches.
+What is the conditional expected value of her daughter's height given the mother's height?
+A: 
+
+```{r}
+x_ <- (60 - mu_m) / sigma_m
+y <- mu_d + rho* sigma_d * x_
+y
+```
+
