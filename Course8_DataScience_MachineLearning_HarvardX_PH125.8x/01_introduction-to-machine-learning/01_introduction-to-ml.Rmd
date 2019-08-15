@@ -1,0 +1,42 @@
+---
+title: 'Data Science: Machine Learning - HarvardX: PH125.8x'
+author: 'Luiz Cunha'
+date: '2019-08-15'
+output: html_notebook
+---
+
+# Section 1: Introduction to Machine Learning
+
+## Overview
+
+In the **Introduction to Machine Learning** section, you will be introduced to machine learning.
+
+After completing this section, you will be able to:
+
+* Explain the difference between the **outcome** and the **features**.
+* Explain when to use **classification** and when to use **prediction**.
+* Explain the importance of **prevalence**.
+* Explain the difference between **sensitivity** and **specificity**.
+
+This section has one part: **introduction to machine learning**. There are comprehension checks at the end.
+
+
+## 1.1 Introduction to Machine Learning
+
+### 1.1.1 Notation
+
+**Key points**
+
+* $X_1,...,X_p$ denote the features, $Y$ denotes the outcomes, and $\hat{Y}$ denotes the predictions.
+* Machine learning prediction tasks can be divided into **categorical** and **continuous** outcomes. We refer to these as **classification** and **prediction**, respectively.
+
+
+### 1.1.2 An Example
+
+**Key points**
+
+* $Y_i$ is an outcome for observation or index i.
+* We use boldface for $X_i$ to distinguish the vector of predictors from the individual predictors $X_{i,1},..., X_{i,784}$.
+* When referring to an arbitrary set of features and outcomes, we drop the index i and use boldface $X$ and $Y$.
+* Uppercase is used to refer to variables because we think of predictors as random variables.
+* Lowercase is used to denote observed values: eg. boldface $X = x$.

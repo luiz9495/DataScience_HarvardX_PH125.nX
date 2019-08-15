@@ -13,6 +13,7 @@ bitops
 boot
 broom
 callr
+caret
 cellranger
 class
 cli
@@ -23,6 +24,7 @@ colorspace
 compiler
 crayon
 curl
+data.table
 datasets
 DBI
 dbplyr
@@ -34,6 +36,7 @@ evaluate
 fansi
 faraway
 forcats
+foreach
 forecast
 foreign
 fracdiff
@@ -43,6 +46,7 @@ ggplot2
 ggrepel
 ggthemes
 glue
+gower
 graphics
 grDevices
 grid
@@ -59,8 +63,10 @@ htmlwidgets
 httpuv
 httr
 hunspell
+ipred
 isdals
 ISOcodes
+iterators
 janeaustenr
 jsonlite
 KernSmooth
@@ -69,6 +75,7 @@ labeling
 Lahman
 later
 lattice
+lava
 lazyeval
 lme4
 lmtest
@@ -83,12 +90,14 @@ mgcv
 mime
 minqa
 misc3d
+ModelMetrics
 modelr
 munsell
 NHANES
 nlme
 nloptr
 nnet
+numDeriv
 openssl
 parallel
 pdftools
@@ -101,6 +110,7 @@ ppcor
 praise
 prettyunits
 processx
+prodlim
 progress
 promises
 ps
@@ -117,6 +127,7 @@ RcppEigen
 RCurl
 readr
 readxl
+recipes
 rematch
 reprex
 reshape2
@@ -133,6 +144,7 @@ SnowballC
 sourcetools
 spatial
 splines
+SQUAREM
 stats
 stats4
 stopwords
