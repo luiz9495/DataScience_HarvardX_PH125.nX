@@ -1,0 +1,61 @@
+---
+title: 'Data Science: Machine Learning - HarvardX: PH125.8x'
+author: 'Luiz Cunha'
+date: '2019-08-16'
+output: html_notebook
+---
+
+```{r include=FALSE}
+# Set knitr options for knitting code into the report:
+# - echo=TRUE: print out code (echo), though any results/output would still be displayed
+# - cache=TRUE: Save results so that code blocks aren't re-run unless code changes (cache),
+# _or_ a relevant earlier code block changed (autodep), but don't re-run if the
+# only thing that changed was the comments (cache.comments)
+# - message, warning = FALSE: Don't clutter R output with messages or warnings
+# This _will_ leave error messages showing up in the knitted report
+# - results="hide": hide the results/output (but here the code would still be displayed)
+# - include=FALSE:  chunk is evaluated, but neither the code nor its output is displayed
+# - eval=FALSE: chunk is not evaluated
+knitr::opts_chunk$set(echo=TRUE,
+               cache=TRUE, autodep=TRUE, cache.comments=FALSE,
+               message=FALSE, warning=FALSE)
+```
+
+# Section 5: Classification with More than Two Classes and the Caret Package
+
+In the **Classification with More than Two Classes and the Caret Package** section, you will learn how to overcome the curse of dimensionality using methods that adapt to higher dimensions and how to use the caret package to implement many different machine learning algorithms.
+
+After completing this section, you will be able to:
+
+* Use **classification and regression trees**.
+* Use **classification (decision) trees**.
+* Apply **random forests** to address the shortcomings of decision trees. 
+* Use the **caret** package to implement a variety of machine learning algorithms.
+
+This section has three parts: 
+
+ 1. **Classification with more than two classes** 
+ 2. The **Caret** Package
+ 3. Set of exercises on the Titanic
+ 
+## 5.1 Classification with more than two classes
+ 
+### 5.1.1 Trees Motivation
+ 
+### 5.1.2 Classification and Regression Trees (CART)
+ 
+### 5.1.3 Classification (Decision) Trees
+ 
+### 5.1.4 Random Forests
+ 
+### 5.1.5 Comprehension Check: Trees and Random Forests
+ 
+ 
+## 5.2 The Caret Package
+### 5.2.1 The Caret Package
+### 5.2.2 Tuning Parameters with Caret
+### 5.2.3 Comprehension Check: Caret Package
+ 
+## 5.3 Set of exercises on the Titanic
+### 5.3.1 Titanic Exercises, Part 1
+### 5.3.2 Titanic Exercises, Part 2

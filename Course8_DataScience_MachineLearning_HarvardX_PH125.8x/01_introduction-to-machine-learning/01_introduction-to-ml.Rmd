@@ -36,7 +36,7 @@ This section has one part: **introduction to machine learning**. There are compr
 **Key points**
 
 * $Y_i$ is an outcome for observation or index i.
-* We use boldface for $X_i$ to distinguish the vector of predictors from the individual predictors $X_{i,1},..., X_{i,784}$.
-* When referring to an arbitrary set of features and outcomes, we drop the index i and use boldface $X$ and $Y$.
+* We use boldface for $\mathbf{X_i}$ to distinguish the vector of predictors from the individual predictors $X_{i,1},..., X_{i,784}$.
+* When referring to an arbitrary set of features and outcomes, we drop the index i and use $\mathbf{X}$ and $Y$.
 * Uppercase is used to refer to variables because we think of predictors as random variables.
 * Lowercase is used to denote observed values: eg. boldface $X = x$.

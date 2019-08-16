@@ -31,6 +31,7 @@ dbplyr
 digest
 dplyr
 dslabs
+e1071
 ellipsis
 evaluate
 fansi
