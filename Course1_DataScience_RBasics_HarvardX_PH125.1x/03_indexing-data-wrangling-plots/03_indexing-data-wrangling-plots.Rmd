@@ -1,0 +1,159 @@
+---
+title: 'Data Science: MachineR Basics - HarvardX: PH125.1x'
+author: 'Luiz Cunha'
+date: '2019-08-19'
+output: html_notebook
+---
+
+```{r include=FALSE}
+# Set knitr options for knitting code into the report:
+# - echo=TRUE: print out code (echo), though any results/output would still be displayed
+# - cache=TRUE: Save results so that code blocks aren't re-run unless code changes (cache),
+# _or_ a relevant earlier code block changed (autodep), but don't re-run if the
+# only thing that changed was the comments (cache.comments)
+# - message, warning = FALSE: Don't clutter R output with messages or warnings
+# This _will_ leave error messages showing up in the knitted report
+# - results="hide": hide the results/output (but here the code would still be displayed)
+# - include=FALSE:  chunk is evaluated, but neither the code nor its output is displayed
+# - eval=FALSE: chunk is not evaluated
+knitr::opts_chunk$set(echo=TRUE,
+               cache=TRUE, autodep=TRUE, cache.comments=FALSE,
+               message=FALSE, warning=FALSE)
+```
+
+# Section 3: Indexing, Data Wrangling, Plots
+
+## Overview
+
+Section 3 introduces the R commands and techniques that help you wrangle, analyze, and visualize data.
+
+In Section 3.1, you will:
+
+* Subset a vector based on properties of another vector. 
+* Use multiple logical operators to index vectors.
+* Extract the indices of vector elements satisfying one or more logical conditions. 
+* Extract the indices of vector elements matching with another vector.
+* Determine which elements in one vector are present in another vector. 
+
+In Section 3.2, you will:
+
+* Wrangle data tables using functions in the ‘dplyr’ package. 
+* Modify a data table by adding or changing columns. 
+* Subset rows in a data table.
+* Subset columns in a data table. 
+* Perform a series of operations using the pipe operator. 
+* Create data frames. 
+
+In Section 3.3, you will:
+
+* Plot data in scatter plots, box plots, and histograms. 
+
+
+## 3.1 Indexing
+
+### 3.1.1 Indexing
+
+**Key points**
+
+* We can use logicals to index vectors.
+* Using the function >sum()on a logical vector returns the number of entries that are true.
+* The logical operator “&” makes two logicals true only when they are both true.
+
+### 3.1.2 Indexing Functions
+
+**Key points**
+
+* The function **which()** gives us the entries of a logical vector that are true.
+* The function **match()** looks for entries in a vector and returns the index needed to access them.
+* We use the function **%in%** if we want to know whether or not each element of a first vector is in a second vector.
+Code
+
+```{r}
+# to determine the murder rate in Massachusetts we may do the following
+ind <- which(murders$state == "Massachusetts")
+murder_rate[ind]
+
+# to obtain the indices and subsequent murder rates of New York, Florida, Texas, we do:
+ind <- match(c("New York", "Florida", "Texas"), murders$state)
+ind
+murder_rate[ind]
+
+# to see if Boston, Dakota, and Washington are states
+c("Boston", "Dakota", "Washington") %in% murders$state
+```
+
+
+## 3.2 Basic Data Wrangling
+
+### 3.2.1 Basic Data Wrangling
+
+**Key points**
+
+* To change a data table by adding a new column, or changing an existing one, we use the **mutate** function.
+* To filter the data by subsetting rows, we use the function filter.
+To subset the data by selecting specific columns, we use the select function.
+We can perform a series of operations by sending the results of one function to another function using what is called the pipe operator, %>%.
+
+**Code**
+```{r}
+# installing and loading the dplyr package
+library(dplyr)
+library(dslabs)
+data("murders")
+
+murders <- mutate(murders, rate = total / population * 100000)
+
+# subsetting with filter
+filter(murders, rate <= 0.71)
+
+# selecting columns with select
+new_table <- select(murders, state, region, rate)
+
+# using the pipe
+murders %>% 
+    select(state, region, rate) 
+%>% filter(rate <= 0.71)
+```
+
+
+### 3.2.2 Creating Data Frames
+
+**Key Points**
+
+* We can use the **data.frame()** function to create data frames.
+* By default, the **data.frame()** function turns characters into factors.  To avoid this, we utilize the **stringsAsFactors** argument and set it equal to false.
+
+**Code**
+```{r}
+# creating a data frame with stringAsFactors = FALSE
+grades <- data.frame(names = c("John", "Juan", "Jean", "Yao"), 
+                     exam_1 = c(95, 80, 90, 85), 
+                     exam_2 = c(90, 85, 85, 90),
+                     stringsAsFactors = FALSE)
+```
+
+
+## 3.3 Plots
+
+## 3.3.1 Plots
+
+**Key Points**
+
+* We can create a simple scatterplot using the function **plot()**.
+* Histograms are graphical summaries that give you a general overview of the types of values you have.  In R, they can be produced using the **hist()** function.
+* **Boxplots** provide a more compact summary of a distribution than a histogram and are more useful for comparing distributions. They can be produced using the boxplot() function.
+
+**Code**
+```{r}
+# a simple scatterplot of total murders versus population
+x <- murders$population / 10^6
+y <- murders$total
+plot(x, y)
+
+# a histogram of murder rates
+hist(murders$rate)
+
+# boxplots of murder rates by region
+boxplot(rate~region, data = murders)
+```
+

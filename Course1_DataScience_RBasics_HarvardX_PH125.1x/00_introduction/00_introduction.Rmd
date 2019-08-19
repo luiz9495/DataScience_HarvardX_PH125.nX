@@ -1,0 +1,54 @@
+---
+title: 'Data Science: MachineR Basics - HarvardX: PH125.1x'
+author: 'Luiz Cunha'
+date: '2019-08-19'
+output: html_notebook
+---
+
+```{r include=FALSE}
+# Set knitr options for knitting code into the report:
+# - echo=TRUE: print out code (echo), though any results/output would still be displayed
+# - cache=TRUE: Save results so that code blocks aren't re-run unless code changes (cache),
+# _or_ a relevant earlier code block changed (autodep), but don't re-run if the
+# only thing that changed was the comments (cache.comments)
+# - message, warning = FALSE: Don't clutter R output with messages or warnings
+# This _will_ leave error messages showing up in the knitted report
+# - results="hide": hide the results/output (but here the code would still be displayed)
+# - include=FALSE:  chunk is evaluated, but neither the code nor its output is displayed
+# - eval=FALSE: chunk is not evaluated
+knitr::opts_chunk$set(echo=TRUE,
+               cache=TRUE, autodep=TRUE, cache.comments=FALSE,
+               message=FALSE, warning=FALSE)
+```
+
+# Introduction and Welcome
+
+## Introduction and Welcome
+
+Welcome to Data Science: R Basics! We're excited to have you join us in this course, which is designed to teach you the basics of analyzing, visualizing, and working with data using R.
+
+This is the first course in the HarvardX Professional Certificate in Data Science, a series of courses that prepare you to do data analysis in R, from simple computations to machine learning.
+
+This course assumes you are comfortable with basic math, algebra and logical operations. You do not need to have coding experience as you will have ample opportunities in this course to practice your coding skills. HarvardX has partnered with DataCamp for assignments in R that allow you to program directly in a browser-based interface. You will, however, need to download the R software to complete the assessments on the edX platform.
+
+Using a combination of guided introduction through short video lectures and more independent in-depth exploration, you will get to practice your new R skills on real-life applications.
+
+**In this course, you will:**
+
+* Learn to read, extract, and create datasets in R
+* Learn to perform a variety of operations on datasets using R
+* Learn to write your own functions/sub-routines in R
+
+**Course overview**
+
+* Section 1: R Basics, Functions, Data types
+You will get started with R, learn about its functions and data types. 
+
+* Section 2: Vectors, Sorting
+You will learn to operate on vectors and advanced functions such as sorting. 
+
+* Section 3: Indexing, Data Manipulation, Plots 
+You will learn to wrangle and visualize data.
+
+* Section 4: Programming Basics 
+You will learn to use general programming features like ‘if-else’, and ‘for loop’ commands, and write your own functions to perform various operations on datasets.

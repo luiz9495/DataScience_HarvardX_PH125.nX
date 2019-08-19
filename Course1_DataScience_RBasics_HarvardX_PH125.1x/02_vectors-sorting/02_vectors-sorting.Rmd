@@ -1,0 +1,133 @@
+---
+title: 'Data Science: MachineR Basics - HarvardX: PH125.1x'
+author: 'Luiz Cunha'
+date: '2019-08-19'
+output: html_notebook
+---
+
+```{r include=FALSE}
+# Set knitr options for knitting code into the report:
+# - echo=TRUE: print out code (echo), though any results/output would still be displayed
+# - cache=TRUE: Save results so that code blocks aren't re-run unless code changes (cache),
+# _or_ a relevant earlier code block changed (autodep), but don't re-run if the
+# only thing that changed was the comments (cache.comments)
+# - message, warning = FALSE: Don't clutter R output with messages or warnings
+# This _will_ leave error messages showing up in the knitted report
+# - results="hide": hide the results/output (but here the code would still be displayed)
+# - include=FALSE:  chunk is evaluated, but neither the code nor its output is displayed
+# - eval=FALSE: chunk is not evaluated
+knitr::opts_chunk$set(echo=TRUE,
+               cache=TRUE, autodep=TRUE, cache.comments=FALSE,
+               message=FALSE, warning=FALSE)
+```
+
+# Section 2: Vectors, Sorting
+
+## Overview
+
+Section 2 introduces you to vectors and functions such as sorting.
+
+In Section 2.1, you will: 
+
+* Create numeric and character vectors. 
+* Name the columns of a vector. 
+* Generate numeric sequences. 
+* Access specific elements or parts of a vector.
+* Coerce data into different data types as needed. 
+
+In Section 2.2, you will: 
+
+* Sort vectors in ascending and descending order. 
+* Extract the indices of the sorted elements from the original vector. 
+* Find the maximum and minimum elements, as well as their indices, in a vector. 
+* Rank the elements of a vector in increasing order. 
+
+In Section 2.3, you will: 
+
+* Perform arithmetic between a vector and a single number.
+* Perform arithmetic between two vectors of the same length. 
+
+
+## 2.1 Vectors
+
+### 2.1.1 Vectors
+
+**Key Points**
+
+* The function **c()**, which stands for concatenate, is useful for creating vectors.
+* Another useful function for creating vectors is the **seq()** function, which generates sequences.
+** Subsetting lets us access specific parts of a vector by using square brackets to access elements of a vector.
+
+**Code**
+```{r}
+# We may create vectors of class numeric or character with the concatenate function
+codes <- c(380, 124, 818)
+country <- c("italy", "canada", "egypt")
+
+# We can also name the elements of a numeric vector
+# Note that the two lines of code below have the same result
+codes <- c(italy = 380, canada = 124, egypt = 818)
+codes <- c("italy" = 380, "canada" = 124, "egypt" = 818)
+
+# We can also name the elements of a numeric vector using the names() function
+codes <- c(380, 124, 818)
+country <- c("italy","canada","egypt")
+names(codes) <- country
+
+# Using square brackets is useful for subsetting to access specific elements of a vector
+codes[2]
+codes[c(1,3)]
+codes[1:2]
+
+# If the entries of a vector are named, they may be accessed by referring to their name
+codes["canada"]
+codes[c("egypt","italy")]
+```
+
+### 2.1.2 Vector Coercion
+
+**Key points**
+
+* In general, **coercion** is an attempt by R to be flexible with data types by guessing what was meant when an entry does not match the expected. For example, when defining x as
+    >x <- c(1, "canada", 3)
+
+    R coerced the data into characters. It guessed that because you put a character string in the vector, you meant the 1 and 3 to actually be character strings "1" and “3”.
+
+* The function **as.character()** turns numbers into characters.
+* The function **as.numeric()** turns characters into numbers.
+* In R, missing data is assigned the value **NA**.
+
+
+## 2.2 Sorting
+
+### 2.2.1 Sorting
+
+**Key points**
+
+* The function **sort()** sorts a vector in increasing order.
+* The function **order()** produces the indices needed to obtain the sorted vector, e.g. a result of  2 3 1 5 4 means the sorted vector will be produced by listing the 2nd, 3rd, 1st, 5th, and then 4th item of the original vector.
+* The function **rank()** gives us the ranks of the items in the original vector.
+* The function **max()** returns the largest value while **which.max()** returns the index of the largest value. The functions **min()** and **which.min()** work similarly for minimum values.
+
+
+## 2.3 Vector Arithmetic
+
+### 2.3.1 Vector Arithmetic
+
+**Key points**
+
+* In R, **arithmetic operations on vectors occur element-wise**.
+
+**Code**
+```{r}
+# The name of the state with the maximum population is found by doing the following
+murders$state[which.max(murders$population)]
+
+# how to obtain the murder rate
+murder_rate <- murders$total / murders$population * 100000
+
+# ordering the states by murder rate, in decreasing order
+murders$state[order(murder_rate, decreasing=TRUE)]
+```
+
+
