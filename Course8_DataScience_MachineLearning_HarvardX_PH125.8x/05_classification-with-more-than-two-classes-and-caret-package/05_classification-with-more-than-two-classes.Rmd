@@ -41,21 +41,840 @@ This section has three parts:
 ## 5.1 Classification with more than two classes
  
 ### 5.1.1 Trees Motivation
- 
+
+**Key points**
+
+* LDA and QDA are **not meant to be used with many predictors $p$** because the number of parameters needed to be estimated becomes too large.
+* **Curse of dimensionality:** for kernel methods such as kNN or local regression, when they have multiple predictors used,  the span/neighborhood/window made to include a given percentage of the data become large. With larger neighborhoods, our methods lose flexibility. The dimension here refers to the fact that when we have $p$ predictors, the distance between two observations is computed in *p-dimensional* space.
+
 ### 5.1.2 Classification and Regression Trees (CART)
- 
+
+**Key points**
+
+* A tree is basically a **flow chart of yes or no questions**. The general idea of the methods we are describing is to define an algorithm that uses data to create these trees with predictions at the ends, referred to as nodes.
+* When the outcome is continuous, we call the decision tree method a **regression tree**.
+* Regression and decision trees operate by predicting an outcome variable $Y$ by **partitioning the predictors**.
+* The general idea here is to **build a decision tree** and, at end of each node, obtain a predictor $\hat{y}$. Mathematically, we are **partitioning the predictor space** into $\mathbf{J}$ non-overlapping regions, $\mathbf{R_1, R_2,..., R_J}$ and then for any predictor $x$ that falls within region $\mathbf{R_J}$, estimate $f(x)$ with the average of the training observations $\mathbf{y_i}$ for which the associated predictor $\mathbf{x_i}$ in also in $\mathbf{R_j}$.
+* To pick $j$ and its value $s$, we find the pair that **minimizes the residual sum of squares (RSS):**
+
+$$\sum_{i:x_i,R_1(j,s)}(y_i-\hat{y}_{R_1})^2 + \sum_{i:x_i, R_2(j,s)}(y_i-\hat{y}_{R_2})^2$$
+
+* To fit the regression tree model, we can use the **rpart** function in the rpart package.
+* Two common parameters used for partition decision are the **complexity parameter (cp)** and the **minimum number of observations required in a partition** before partitioning it further (**minsplit** in the rpart package). 
+* If we already have a tree and want to apply a higher cp value, we can use the **prune** function. We call this pruning a tree because we are snipping off partitions that do not meet a cp criterion. 
+
+**Code**
+```{r}
+# Load data
+library(tidyverse)
+library(dslabs)
+data("olive")
+olive %>% as_tibble()
+table(olive$region)
+olive <- select(olive, -area)
+
+# Predict region using KNN
+library(caret)
+fit <- train(region ~ .,  method = "knn", 
+             tuneGrid = data.frame(k = seq(1, 15, 2)), 
+             data = olive)
+ggplot(fit)
+
+# Plot distribution of each predictor stratified by region
+olive %>% gather(fatty_acid, percentage, -region) %>%
+  ggplot(aes(region, percentage, fill = region)) +
+  geom_boxplot() +
+  facet_wrap(~fatty_acid, scales = "free") +
+  theme(axis.text.x = element_blank())
+
+# plot values for eicosenoic and linoleic
+p <- olive %>% 
+  ggplot(aes(eicosenoic, linoleic, color = region)) + 
+  geom_point()
+p + geom_vline(xintercept = 0.065, lty = 2) + 
+  geom_segment(x = -0.2, y = 10.54, xend = 0.065, yend = 10.54, color = "black", lty = 2)
+
+# load data for regression tree
+data("polls_2008")
+qplot(day, margin, data = polls_2008)
+
+library(rpart)
+fit <- rpart(margin ~ ., data = polls_2008)
+
+# visualize the splits 
+plot(fit, margin = 0.1)
+text(fit, cex = 0.75)
+polls_2008 %>% 
+  mutate(y_hat = predict(fit)) %>% 
+  ggplot() +
+  geom_point(aes(day, margin)) +
+  geom_step(aes(day, y_hat), col="red")
+
+# change parameters
+fit <- rpart(margin ~ ., data = polls_2008, control = rpart.control(cp = 0, minsplit = 2))
+polls_2008 %>% 
+  mutate(y_hat = predict(fit)) %>% 
+  ggplot() +
+  geom_point(aes(day, margin)) +
+  geom_step(aes(day, y_hat), col="red")
+
+# use cross validation to choose cp
+library(caret)
+train_rpart <- train(margin ~ .,method = "rpart",tuneGrid = data.frame(cp = seq(0, 0.05, len = 25)),data = polls_2008)
+ggplot(train_rpart)
+
+# access the final model and plot it
+plot(train_rpart$finalModel, margin = 0.1)
+text(train_rpart$finalModel, cex = 0.75)
+polls_2008 %>% 
+  mutate(y_hat = predict(train_rpart)) %>% 
+  ggplot() +
+  geom_point(aes(day, margin)) +
+  geom_step(aes(day, y_hat), col="red")
+
+# prune the tree 
+pruned_fit <- prune(fit, cp = 0.01)
+```
+
+
 ### 5.1.3 Classification (Decision) Trees
- 
+
+**Key points**
+
+* **Classification trees**, or decision trees, are used in prediction problems where the **outcome is categorical**. 
+* Decision trees form predictions by calculating **which class is the most common** among the training set observations within the partition, rather than taking the average in each partition.
+* Two of the more popular metrics to choose the partitions are the **Gini index** and **entropy**.
+
+$$Gini(j) = \sum_{k=1}^{K}\hat{p}_{j,k}(1-\hat{p}_{j,k})$$
+$$entropy(j) = -\sum_{k=1}^{K}\hat{p}_{j,k}\log(\hat{p}_{j,k}),\ with\ 0*\log(0)\ defined\ as\ 0$$
+
+* Pros: Classification trees are highly interpretable and easy to visualize.They can model human decision processes and don't require use of dummy predictors for categorical variables.  
+* Cons: The approach via recursive partitioning can easily over-train and is therefore a bit harder to train than. Furthermore, in terms of accuracy, it is rarely the best performing method since it is not very flexible and is highly unstable to changes in training data. 
+
+**Code**
+```{r}
+# fit a classification tree and plot it
+train_rpart <- train(y ~ .,
+              method = "rpart",
+              tuneGrid = data.frame(cp = seq(0.0, 0.1, len = 25)),
+              data = mnist_27$train)
+plot(train_rpart)
+
+# compute accuracy
+confusionMatrix(predict(train_rpart, mnist_27$test), mnist_27$test$y)$overall["Accuracy"]
+```
+
+
 ### 5.1.4 Random Forests
- 
+
+**Key points**
+
+* **Random forests** are a very popular machine learning approach that addresses the shortcomings of decision trees. The goal is to improve prediction performance and reduce instability by **averaging multiple decision trees** (a forest of trees constructed with randomness).
+* The general idea of random forests is to generate many predictors, each using regression or classification trees, and then **forming a final prediction based on the average prediction of all these trees**. To assure that the individual trees are not the same, we use the **bootstrap to induce randomness**. 
+* A **disadvantage** of random forests is that we **lose interpretability**.
+* An approach that helps with interpretability is to examine **variable importance**. To define variable importance we **count how often a predictor is used in the individual trees**. The caret package includes the function **varImp** that extracts variable importance from any model in which the calculation is implemented. 
+
+**Code**
+```{r}
+library(randomForest)
+fit <- randomForest(margin~., data = polls_2008) 
+plot(fit)
+
+polls_2008 %>%
+  mutate(y_hat = predict(fit, newdata = polls_2008)) %>% 
+  ggplot() +
+  geom_point(aes(day, margin)) +
+  geom_line(aes(day, y_hat), col="red")
+
+library(randomForest)
+train_rf <- randomForest(y ~ ., data=mnist_27$train)
+confusionMatrix(predict(train_rf, mnist_27$test), mnist_27$test$y)$overall["Accuracy"]
+
+# use cross validation to choose parameter
+train_rf_2 <- train(y ~ .,
+      method = "Rborist",
+      tuneGrid = data.frame(predFixed = 2, minNode = c(3, 50)),
+      data = mnist_27$train)
+confusionMatrix(predict(train_rf_2, mnist_27$test), mnist_27$test$y)$overall["Accuracy"]
+```
+
 ### 5.1.5 Comprehension Check: Trees and Random Forests
- 
- 
+
+#### Question 1
+Create a simple dataset where the outcome grows 0.75 units on average for every increase in a predictor, using this code:
+
+```{r}
+library(rpart)
+n <- 1000
+sigma <- 0.25
+set.seed(1, sample.kind = "Rounding") # if using R 3.6 or later
+x <- rnorm(n, 0, 1)
+y <- 0.75 * x + rnorm(n, 0, sigma)
+dat <- data.frame(x = x, y = y)
+
+# Q: Which code correctly uses rpart to fit a regression tree and saves the result to fit?
+#fit1b <- train(y~x, data=dat, method='rpart')
+fit1 <- rpart(y ~ ., data = dat)
+```
+
+
+#### Question 2
+Which of the following plots has the same tree shape obtained in Q1?
+```{r}
+plot(fit1)
+text(fit1)
+```
+
+#### Question 3
+Below is most of the code to make a scatter plot of y versus x along with the predicted values based on the fit.
+```{r}
+dat %>% 
+	mutate(y_hat = predict(fit1)) %>% 
+	ggplot() +
+	geom_point(aes(x, y)) +
+	# MISSING CODE
+    geom_step(aes(x, y_hat), col=2)
+    # END MISSING CODE
+```
+
+#### Question 4
+Now run Random Forests instead of a regression tree using **randomForest** from the __randomForest__ package, and remake the scatterplot with the prediction line. Part of the code is provided for you below.
+```{r}
+library(randomForest)
+# MISSING CODE
+fit4 <- randomForest(y ~ x, data = dat)
+# END MISSING CODE
+dat %>% 
+	mutate(y_hat = predict(fit4)) %>% 
+	ggplot() +
+	geom_point(aes(x, y)) +
+	geom_step(aes(x, y_hat), col = 2)
+```
+
+
+#### Question 5
+Use the plot function to see if the Random Forest from Q4 has converged or if we need more trees.
+```{r}
+plot(fit4)
+# Q: Which of these graphs is produced by plotting the random forest?
+```
+
+#### Question 6
+It seems that the default values for the Random Forest result in an estimate that is too flexible (unsmooth). Re-run the Random Forest but this time with a node size of 50 and a maximum of 25 nodes. Remake the plot.
+
+Part of the code is provided for you below.
+```{r}
+library(randomForest)
+# MISSING CODE
+fit5 <- randomForest(y~x, data = dat, nodesize = 50, maxnodes = 25)
+# END MISSING CODE
+dat %>% 
+	mutate(y_hat = predict(fit5)) %>% 
+	ggplot() +
+	geom_point(aes(x, y)) +
+	geom_step(aes(x, y_hat), col = 2)
+# Q: What code should replace #BLANK in the provided code?
+plot(fit5)
+```
+
+
 ## 5.2 The Caret Package
+
 ### 5.2.1 The Caret Package
+
+**Caret package links**
+
+http://topepo.github.io/caret/available-models.html
+
+http://topepo.github.io/caret/train-models-by-tag.html
+
+**Key points**
+
+* The **caret** package helps provides a uniform interface and standardized syntax for the many different machine learning packages in R. Note that caret does not automatically install the packages needed.
+
+**Code**
+```{r}
+library(tidyverse)
+library(dslabs)
+data("mnist_27")
+
+library(caret)
+train_glm <- train(y ~ ., method = "glm", data = mnist_27$train)
+train_knn <- train(y ~ ., method = "knn", data = mnist_27$train)
+
+y_hat_glm <- predict(train_glm, mnist_27$test, type = "raw")
+y_hat_knn <- predict(train_knn, mnist_27$test, type = "raw")
+
+confusionMatrix(y_hat_glm, mnist_27$test$y)$overall[["Accuracy"]]
+confusionMatrix(y_hat_knn, mnist_27$test$y)$overall[["Accuracy"]]
+```
+
+
 ### 5.2.2 Tuning Parameters with Caret
+
+**Key points**
+
+* The **train** function automatically uses cross-validation to decide among a few default values of a tuning parameter.
+* The **getModelInfo** and **modelLookup** functions can be used to learn more about a model and the parameters that can be optimized.
+* We can use the **tunegrid** parameter in the train function to select a grid of values to be compared.
+* The **trControl** parameter and **trainControl** function can be used to change the way cross-validation is performed.
+* Note that **not all parameters in machine learning algorithms are tuned**. We use the **train** function to only optimize parameters that are tunable.
+
+**Code**
+```{r}
+library(tidyverse)
+library(caret)
+
+getModelInfo("knn")
+modelLookup("knn")
+
+train_knn <- train(y ~ ., method = "knn", data = mnist_27$train)
+ggplot(train_knn, highlight = TRUE)
+
+train_knn <- train(y ~ ., method = "knn", 
+                   data = mnist_27$train,
+                   tuneGrid = data.frame(k = seq(9, 71, 2)))
+ggplot(train_knn, highlight = TRUE)
+
+train_knn$bestTune
+
+train_knn$finalModel
+
+confusionMatrix(predict(train_knn, mnist_27$test, type = "raw"),
+                mnist_27$test$y)$overall["Accuracy"]
+
+control <- trainControl(method = "cv", number = 10, p = .9)
+train_knn_cv <- train(y ~ ., method = "knn", 
+                      data = mnist_27$train,
+                      tuneGrid = data.frame(k = seq(9, 71, 2)),
+                      trControl = control)
+ggplot(train_knn_cv, highlight = TRUE)
+
+train_knn$results %>% 
+     ggplot(aes(x = k, y = Accuracy)) +
+     geom_line() +
+     geom_point() +
+     geom_errorbar(aes(x = k, 
+                       ymin = Accuracy - AccuracySD,
+                       ymax = Accuracy + AccuracySD))
+
+plot_cond_prob <- function(p_hat=NULL){
+     tmp <- mnist_27$true_p
+     if(!is.null(p_hat)){
+          tmp <- mutate(tmp, p=p_hat)
+     }
+     tmp %>% ggplot(aes(x_1, x_2, z=p, fill=p)) +
+          geom_raster(show.legend = FALSE) +
+          scale_fill_gradientn(colors=c("#F8766D","white","#00BFC4")) +
+          stat_contour(breaks=c(0.5),color="black")
+}
+
+plot_cond_prob(predict(train_knn, mnist_27$true_p, type = "prob", silent=TRUE)[,2])
+
+modelLookup("gamLoess")
+
+grid <- expand.grid(span = seq(0.15, 0.65, len = 10), degree = 1)
+
+train_loess <- train(y ~ ., 
+               method = "gamLoess",
+               tuneGrid=grid,
+               data = mnist_27$train, silent=TRUE)
+ggplot(train_loess, highlight = TRUE)
+
+confusionMatrix(data = predict(train_loess, mnist_27$test), 
+                reference = mnist_27$test$y)$overall["Accuracy"]
+
+#p1 <- plot_cond_prob(predict(train_loess, mnist_27$true_p, type = "prob", silent = TRUE)[,2])
+p1
+```
+
+
+
 ### 5.2.3 Comprehension Check: Caret Package
- 
+
+#### Question 1
+Use the rpart function to fit a classification tree to the tissue_gene_expression dataset. Use the train function to estimate the accuracy. Try out cp values of seq(0, 0.1, 0.01). Plot the accuracies to report the results of the best model. Set the seed to 1991.
+```{r}
+library(caret)
+library(dslabs)
+set.seed(1991, sample.kind = "Rounding") # if using R 3.6 or later
+data("tissue_gene_expression")
+    
+fit1 <- with(tissue_gene_expression, 
+                train(x, y, method = "rpart",
+                      tuneGrid = data.frame(cp = seq(0, 0.1, 0.01))))
+    
+ggplot(fit1)  
+
+```
+
+Q: Which value of cp gives the highest accuracy?  
+A: 0
+
+#### Question 2
+Note that there are only 6 placentas in the dataset. By default, rpart requires 20 observations before splitting a node. That means that it is difficult to have a node in which placentas are the majority. Rerun the analysis you did in the exercise in Q1, but this time, allow rpart to split any node by using the argument control = rpart.control(minsplit = 0). Look at the confusion matrix again to determine whether the accuracy increases. Again, set the seed to 1991.
+
+```{r}
+library(caret)
+library(broom)
+library(dslabs)
+set.seed(1991, sample.kind = "Rounding") # if using R 3.6 or later
+data("tissue_gene_expression")
+
+fit2 <- with(tissue_gene_expression, 
+                train(x, y, method = "rpart",
+                      tuneGrid = data.frame(cp = seq(0, 0.1, 0.01)),
+                      control = rpart.control(minsplit = 0)
+                      ))
+# Q: What is the accuracy now?
+# A: 
+confusionMatrix(fit2)
+
+ggplot(fit2) 
+```
+
+
+#### Question 3
+Plot the tree from the best fitting model of the analysis you ran in Q1.
+```{r}
+plot(fit2$finalModel, margin = 0.1)
+text(fit2$finalModel, cex = 0.75)
+
+# Q: Which gene is at the 1st split?
+# A: GPA33
+```
+
+#### Question 4
+We can see that with just seven genes, we are able to predict the tissue type. Now let's see if we can predict the tissue type with even fewer genes using a Random Forest. Use the train function and the rf method to train a Random Forest. Try out values of mtry ranging from seq(50, 200, 25) (you can also explore other values on your own). What mtry value maximizes accuracy? To permit small nodesize to grow as we did with the classification trees, use the following argument: nodesize = 1.  
+Note: This exercise will take some time to run. If you want to test out your code first, try using smaller values with ntree. Set the seed to 1991 again.
+
+
+```{r}
+library(randomForest)
+set.seed(1991, sample.kind = "Rounding") # if using R 3.6 or later
+
+fit4 <- with(tissue_gene_expression, 
+                train(x, y, method = "rf", tuneGrid = data.frame(mtry = seq(50, 200, 25)),  nodesize =1))
+fit4
+
+# Q: What value of mtry maximizes accuracy?
+# A: 100
+ggplot(fit4)
+```
+
+#### Question 5
+Use the function *varImp* on the output of train and save it to an object called imp.  
+NB: ?varImp : a generic method for calculating variable importance for objects produced by *train* and method specific methods.
+
+```{r}
+imp <- varImp(fit4) ## FILL MISSING CODE
+imp
+```
+
+#### Question 6
+The rpart model we ran above produced a tree that used just seven predictors. Extracting the predictor names is not straightforward, but can be done. If the output of the call to train was fit_rpart, we can extract the names like this:
+
+    tree_terms <- as.character(unique(fit_rpart$finalModel$frame$var[!(fit_rpart$finalModel$frame$var == "<leaf>")]))
+    tree_terms
+
+Calculate the variable importance in the Random Forest call for these seven predictors and examine where they rank.
+```{r}
+tree_terms <- as.character(unique(fit2$finalModel$frame$var[!(fit2$finalModel$frame$var == "<leaf>")]))
+tree_terms
+
+data_frame(term = rownames(imp$importance), 
+			importance = imp$importance$Overall) %>%
+	mutate(rank = rank(-importance)) %>% arrange(desc(importance)) %>%
+	filter(term %in% tree_terms)
+# Q: What is the importance of the CFHR4 gene in the Random Forest call?
+# A: 35.03
+# Q: What is the rank of the CFHR4 gene in the Random Forest call?
+# A: 7
+```
+
+
 ## 5.3 Set of exercises on the Titanic
+
 ### 5.3.1 Titanic Exercises, Part 1
+
+**Titanic Exercises**
+
+These exercises cover everything you have learned in this course so far. You will use the background information to provided to train a number of different types of models on this dataset.
+
+**Background**
+
+The Titanic was a British ocean liner that struck an iceberg and sunk on its maiden voyage in 1912 from the United Kingdom to New York. More than 1,500 of the estimated 2,224 passengers and crew died in the accident, making this one of the largest maritime disasters ever outside of war. The ship carried a wide range of passengers of all ages and both genders, from luxury travelers in first-class to immigrants in the lower classes. However, not all passengers were equally likely to survive the accident. You will use real data about a selection of 891 passengers to predict which passengers survived.
+
+**Libraries and data**
+Use the titanic_train data frame from the titanic library as the starting point for this project.
+
+```{r}
+library(titanic)    # loads titanic_train data frame
+library(caret)
+library(tidyverse)
+library(rpart)
+
+# 3 significant digits
+options(digits = 3)
+
+# clean the data - `titanic_train` is loaded with the titanic package
+titanic_clean <- titanic_train %>%
+    mutate(Survived = factor(Survived),
+           Embarked = factor(Embarked),
+           Age = ifelse(is.na(Age), median(Age, na.rm = TRUE), Age), # NA age to median age
+           FamilySize = SibSp + Parch + 1) %>%    # count family members
+    select(Survived,  Sex, Pclass, Age, Fare, SibSp, Parch, FamilySize, Embarked)
+```
+
+#### Question 1: Training and test sets
+Split titanic_clean into test and training sets - after running the setup code, it should have 891 rows and 9 variables.
+
+Set the seed to 42, then use the caret package to create a 20% data partition based on the Survived column. Assign the 20% partition to test_set and the remaining 80% partition to train_set.
+
+Q: How many observations are in the training set?
+Q: How many observations are in the test set?
+Q :What proportion of individuals in the training set survived?
+
+```{r}
+set.seed(42, sample.kind = 'Rounding') # if R version >= 3.6
+
+test_index <- createDataPartition(titanic_clean$Survived, times = 1, p = 0.2, list = FALSE)
+train_set <- titanic_clean[-test_index,]
+test_set <- titanic_clean[test_index,]
+
+nrow(train_set)
+nrow(test_set)
+mean(train_set$Survived == 1)
+```
+
+#### Question 2:  Baseline prediction by guessing the outcome
+The simplest prediction method is randomly guessing the outcome without using additional predictors. These methods will help us determine whether our machine learning algorithm performs better than chance. How accurate are two methods of guessing Titanic passenger survival?
+
+Set the seed to 3. For each individual in the test set, randomly guess whether that person survived or not. Assume that each person has an equal chance of surviving or not surviving.
+
+Q: What is the accuracy of this guessing method?
+
+```{r}
+set.seed(3, sample.kind = 'Rounding') # if R version >= 3.6
+
+guess_ <- sample(c(0,1), nrow(test_set), replace = TRUE)
+test_set %>% 
+    filter(Survived == guess_) %>%
+    summarize(n() / nrow(test_set))
+
+# guess with equal probability of survival
+#guess <- sample(c(0,1), nrow(test_set), replace = TRUE)
+#mean(guess == test_set$Survived)
+
+```
+
+#### Question 3a: Predicting survival by sex
+Use the training set to determine whether members of a given sex were more likely to survive or die. Apply this insight to generate survival predictions on the test set.
+
+```{r}
+train_set %>%
+    group_by(Sex) %>%
+    summarize(Survived = mean(Survived == 1))
+
+# Q: What proportion of training set females survived? A: 0.731
+# Q: What proportion of training set males survived? A: 0.197
+```
+
+#### Question 3b: Question 3b: Predicting survival by sex
+Use the training set to determine whether members of a given sex were more likely to survive or die. Apply this insight to generate survival predictions on the test set.
+
+Predict survival using sex on the test set: if the survival rate for a sex is over 0.5, predict survival for all individuals of that sex, and predict death if the survival rate for a sex is under 0.5.
+
+What is the accuracy of this sex-based prediction method on the test set?
+```{r}
+test_set %>%
+    summarize( (sum(Sex == 'female' & Survived == 1) + sum(Sex == 'male' & Survived == 0)) / n())
+```
+
+#### Question 4a: Predicting survival by passenger class
+In which class(es) (Pclass) were passengers more likely to survive than die?
+```{r}
+survival_class <- titanic_clean %>%
+    group_by(Pclass) %>%
+    summarize(PredictingSurvival = ifelse(mean(Survived == 1) >=0.5, 1, 0))
+survival_class
+```
+
+#### Question 4b: Predicting survival by passenger class
+Predict survival using passenger class on the test set: predict survival if the survival rate for a class is over 0.5, otherwise predict death.
+
+What is the accuracy of this class-based prediction method on the test set?
+```{r}
+test_set %>%
+    inner_join(survival_class, by='Pclass') %>%
+    summarize(PredictingSurvival = mean(Survived == PredictingSurvival))
+```
+
+#### Question 4c: Predicting survival by passenger class
+Group passengers by both sex and passenger class.
+
+Which sex and class combinations were more likely to survive than die?
+```{r}
+survival_class <- titanic_clean %>%
+    group_by(Sex, Pclass) %>%
+    summarize(PredictingSurvival = ifelse(mean(Survived == 1) > 0.5, 1, 0))
+survival_class
+```
+
+#### Question 4d: What is the accuracy of this sex- and class-based prediction method on the test set?
+Predict survival using both sex and passenger class on the test set. Predict survival if the survival rate for a sex/class combination is over 0.5, otherwise predict death.
+
+```{r}
+test_set %>%
+    inner_join(survival_class, by=c('Sex', 'Pclass')) %>%
+    summarize(PredictingSurvival = mean(Survived == PredictingSurvival))
+```
+
+#### Question 5a: Confusion matrix
+Use the confusionMatrix function to create confusion matrices for the sex model, class model, and combined sex and class model. You will need to convert predictions and survival status to factors to use this function.
+
+What is the "positive" class used to calculate confusion matrix metrics?
+Which model has the highest sensitivity?
+Which model has the highest specificity?
+Which model has the highest balanced accuracy?
+
+```{r}
+# Confusion Matrix: sex model
+sex_model <- train_set %>%
+    group_by(Sex) %>%
+    summarize(Survived_predict = ifelse(mean(Survived == 1) > 0.5, 1, 0))
+test_set1 <- test_set %>%
+    inner_join(sex_model, by = 'Sex')
+cm1 <- confusionMatrix(data = factor(test_set1$Survived_predict), reference = factor(test_set1$Survived))
+cm1 %>%
+    tidy() %>%
+    filter(term == 'sensitivity') %>%
+    .$estimate
+cm1 %>%
+    tidy() %>%
+    filter(term == 'specificity') %>%
+    .$estimate
+cm1 %>%
+    tidy() %>%
+    filter(term == 'balanced_accuracy') %>%
+    .$estimate
+
+# Confusion Matrix: class model
+class_model <- train_set %>%
+    group_by(Pclass) %>%
+    summarize(Survived_predict = ifelse(mean(Survived == 1) > 0.5, 1, 0))
+test_set2 <- test_set %>%
+    inner_join(class_model, by = 'Pclass')
+cm2 <- confusionMatrix(data = factor(test_set2$Survived_predict), reference = factor(test_set2$Survived))
+cm2 %>%
+    tidy() %>%
+    filter(term == 'sensitivity') %>%
+    .$estimate
+cm2 %>%
+    tidy() %>%
+    filter(term == 'specificity') %>%
+    .$estimate
+cm2 %>%
+    tidy() %>%
+    filter(term == 'balanced_accuracy') %>%
+    .$estimate
+
+# Confusion Matrix: sex and class model
+sex_class_model <- train_set %>%
+    group_by(Sex, Pclass) %>%
+    summarize(Survived_predict = ifelse(mean(Survived == 1) > 0.5, 1, 0))
+test_set3 <- test_set %>%
+    inner_join(sex_class_model, by=c('Sex', 'Pclass'))
+cm3 <- confusionMatrix(data = factor(test_set3$Survived_predict), reference = factor(test_set3$Survived))
+cm3 %>%
+    tidy() %>%
+    filter(term == 'sensitivity') %>%
+    .$estimate
+cm3 %>%
+    tidy() %>%
+    filter(term == 'specificity') %>%
+    .$estimate
+cm3 %>%
+    tidy() %>%
+    filter(term == 'balanced_accuracy') %>%
+    .$estimate
+```
+
+#### Question 5b: Confusion matrix
+Q: What is the maximum value of balanced accuracy?
+A: cf. 5a
+
+#### Question 6: F1 scores
+Use the *F_meas* function to calculate F1 scores for the sex model, class model, and combined sex and class model. You will need to convert predictions to factors to use this function.
+
+Which model has the highest F1 score?
+
+```{r}
+F_meas(data=factor(test_set1$Survived), reference = factor(test_set1$Survived_predict))
+F_meas(data=factor(test_set2$Survived), reference = factor(test_set2$Survived_predict))
+F_meas(data=factor(test_set3$Survived), reference = factor(test_set3$Survived_predict))
+```
+
 ### 5.3.2 Titanic Exercises, Part 2
+
+#### Question 7: Survival by fare - LDA and QDA
+Train a model using linear discriminant analysis (LDA) with the caret lda method using Fare as the only predictor.
+What is the accuracy on the test set for the LDA model?
+
+```{r}
+fit_lda <- train(Survived ~ Fare, data = train_set, method = 'lda')
+Survived_hat <- predict(fit_lda, test_set)
+mean(test_set$Survived == Survived_hat)
+```
+
+Train a model using quadratic discriminant analysis (QDA) with the caret qda method using fare as the only predictor.
+What is the accuracy on the test set for the QDA model?
+```{r}
+fit_qda <- train(Survived ~ Fare, data = train_set, method = 'qda')
+Survived_hat <- predict(fit_qda, test_set)
+mean(test_set$Survived == Survived_hat)
+```
+
+
+#### Question 8: Logistic regression models
+Train a logistic regression model with the caret glm method using age as the only predictor.
+What is the accuracy on the test set using age as the only predictor?
+```{r}
+fit_logreg_a <- glm(Survived ~ Age, data = train_set, family = 'binomial')
+survived_hat_a <- ifelse(predict(fit_logreg_a, test_set) >= 0, 1, 0)
+mean(survived_hat_a == test_set$Survived)
+```
+
+Train a logistic regression model with the caret glm method using four predictors: sex, class, fare, and age.
+What is the accuracy on the test set using these four predictors?
+```{r}
+fit_logreg_b <- glm(Survived ~ Sex + Pclass + Fare + Age, data = train_set, family = 'binomial')
+survived_hat_b <- ifelse(predict(fit_logreg_b, test_set) >= 0, 1, 0)
+mean(survived_hat_b == test_set$Survived)
+```
+
+Train a logistic regression model with the caret glm method using all predictors. Ignore warnings about rank-deficient fit.
+What is the accuracy on the test set using all predictors?
+
+```{r}
+str(train_set)
+fit_logreg_c <- glm(Survived ~ ., data = train_set, family = 'binomial')
+survived_hat_c <- ifelse(predict(fit_logreg_c, test_set) >= 0, 1, 0)
+mean(survived_hat_c == test_set$Survived)
+```
+
+#### Question 9a: kNN model
+Set the seed to 6. Train a kNN model on the training set using caret. Try tuning with k = seq(3, 51, 2).
+What is the optimal value of the number of neighbors k?
+
+```{r}
+set.seed(6, sample.kind = "Rounding")
+
+# Method below doesn't give same result as EdX (though it is correct)
+
+# ks <- seq(3,51,2)
+# res_knn9a <- sapply(ks, function(k) {
+#     fit_knn9a <- knn3(Survived ~ ., data = train_set, k = k)
+#     survived_hat <- predict(fit_knn9a, train_set, type = "class") %>% factor(levels = levels(train_set$Survived))
+#     cm_test <- confusionMatrix(data = survived_hat, reference = train_set$Survived)
+#     cm_test$overall["Accuracy"]
+# })
+# ks[which.max(res_knn9a)]
+
+# Other method using train function
+k <- seq(3,51,2)
+fit_knn9a <- train(Survived ~ ., data = train_set, method = "knn", tuneGrid = data.frame(k))
+fit_knn9a$bestTune
+```
+
+
+#### Question 9b: kNN model
+Plot the kNN model to investigate the relationship between the number of neighbors and accuracy on the training set.
+```{r}
+ggplot(fit_knn9a)
+```
+
+#### Question 9c: kNN model
+What is the accuracy of the kNN model on the test set?
+
+```{r}
+survived_hat <- predict(fit_knn9a, test_set) %>% factor(levels = levels(test_set$Survived))
+cm_test <- confusionMatrix(data = survived_hat, reference = test_set$Survived)
+cm_test$overall["Accuracy"]
+```
+
+#### Question 10: Cross-validation
+Set the seed to 8 and train a new kNN model. Instead of the default training control, use 10-fold cross-validation where each partition consists of 10% of the total.
+
+What is the optimal value of k using cross-validation?
+What is the accuracy on the test set using the cross-validated kNN model?
+```{r}
+set.seed(8, sample.kind = "Rounding")
+
+fit_knn10 <- train(Survived ~ ., 
+                   data=train_set, 
+                   method = "knn",
+                   tuneGrid = data.frame(k = seq(3, 51, 2)),
+                   trControl = trainControl(method = "cv", number=10, p=0.9))
+fit_knn10
+
+survived_hat <- predict(fit_knn10, test_set)
+cm_test <- confusionMatrix(data = survived_hat, reference = test_set$Survived)
+cm_test$overall["Accuracy"]
+```
+
+#### Question 11a: Classification tree model
+Set the seed to 10. Use caret to train a decision tree with the rpart method. Tune the complexity parameter with cp = seq(0, 0.05, 0.002).
+
+What is the optimal value of the complexity parameter (cp)?
+What is the accuracy of the decision tree model on the test set?
+```{r}
+set.seed(10, sample.kind = 'Rounding')
+
+fit_rpart11 <- train(Survived ~ ., 
+                   data=train_set, 
+                   method = "rpart",
+                   tuneGrid = data.frame(cp = seq(0, 0.05, 0.002)))
+plot(fit_rpart11)
+
+survived_hat <- predict(fit_rpart11, test_set)
+cm_test <- confusionMatrix(data = survived_hat, reference = test_set$Survived)
+cm_test$overall["Accuracy"]
+```
+
+
+#### Question 11b: Classification tree model
+Inspect the final model and plot the decision tree.
+
+Which variables are used in the decision tree?
+```{r}
+fit_rpart11$finalModel
+plot(fit_rpart11$finalModel, margin=0.1)
+text(fit_rpart11$finalModel, cex = 0.75)
+```
+
+#### Question 12: Random forest model
+
+Set the seed to 14. Use the caret train function with the rf method to train a random forest. Test values of mtry ranging from 1 to 7. Set ntree to 100.
+
+What mtry value maximizes accuracy?  
+What is the accuracy of the random forest model on the test set?  
+**Use varImp on the random forest model object to determine the importance of various predictors to the random forest model**.  
+What is the most important variable?  
+
+```{r}
+set.seed(14, sample.kind = 'Rounding')
+
+fit12_rf <- train(Survived ~., 
+                  data = train_set,
+                  method = "rf", 
+                  tuneGrid = data.frame(mtry = seq(1, 7)), 
+                  ntree = 100)
+fit12_rf$bestTune
+
+survived_hat <- predict(fit12_rf, test_set)
+mean(survived_hat == test_set$Survived)
+
+varImp(fit12_rf)
+```
+

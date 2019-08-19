@@ -1,0 +1,358 @@
+---
+title: 'Data Science: Machine Learning - HarvardX: PH125.8x'
+author: 'Luiz Cunha'
+date: '2019-08-19'
+output: html_notebook
+---
+
+```{r include=FALSE}
+# Set knitr options for knitting code into the report:
+# - echo=TRUE: print out code (echo), though any results/output would still be displayed
+# - cache=TRUE: Save results so that code blocks aren't re-run unless code changes (cache),
+# _or_ a relevant earlier code block changed (autodep), but don't re-run if the
+# only thing that changed was the comments (cache.comments)
+# - message, warning = FALSE: Don't clutter R output with messages or warnings
+# This _will_ leave error messages showing up in the knitted report
+# - results="hide": hide the results/output (but here the code would still be displayed)
+# - include=FALSE:  chunk is evaluated, but neither the code nor its output is displayed
+# - eval=FALSE: chunk is not evaluated
+knitr::opts_chunk$set(echo=TRUE,
+               cache=TRUE, autodep=TRUE, cache.comments=FALSE,
+               message=FALSE, warning=FALSE)
+```
+
+# Section 7: Final Assessment
+
+## 7.1 Final Assessment: Breast Cancer Prediction Project
+
+### 7.1.1 Breast Cancer Project Part 1
+
+The brca dataset contains information about breast cancer diagnosis biopsy samples for tumors that were determined to be either benign (not cancer) and malignant (cancer). The brca object is a list consisting of:
+
+* brca$y: a vector of sample classifications ("B" = benign or "M" = malignant)
+* brca$x: a matrix of numeric features describing properties of the shape and size of cell nuclei extracted from biopsy microscope images
+
+For these exercises, load the data by setting your options and loading the libraries and data as shown in the code here:
+
+```{r}
+options(digits = 3)
+library(matrixStats)
+library(tidyverse)
+library(caret)
+library(dslabs)
+data(brca)
+```
+
+#### Question 1: Dimensions and properties
+
+```{r}
+df_brca <- as.data.frame(brca)
+str(df_brca)
+```
+Q: How many samples are in the dataset?  
+A: 569
+
+Q: How many predictors are in the matrix?  
+A: 31
+
+Q: What proportion of the samples are malignant?  
+A: 0.373
+
+Q: Which column number has the highest mean?  
+A: 24
+
+Q: Which column number has the lowest standard deviation?  
+A: 20
+
+```{r}
+c(dim(brca$x)[1], dim(brca$x)[2])
+mean(df_brca$y == 'M')
+which.max(colMeans(brca$x))
+which.min(colSds(brca$x))
+```
+
+#### Question 2: Scaling the matrix
+Use sweep two times to scale each column: subtract the column mean, then divide by the column standard deviation.
+
+Q: After scaling, what is the standard deviation of the first column?  
+A: 
+
+Q: After scaling, what is the median value of the first column?  
+A:
+
+```{r}
+x_centered <- sweep(brca$x, 2, colMeans(brca$x))
+x_scaled <- sweep(x_centered, 2, colSds(brca$x), FUN = "/")
+
+sd(x_scaled[,1])
+median(x_scaled[,1])
+```
+
+#### Question 3: Distance
+Calculate the distance between all samples using the scaled matrix.
+
+Q: What is the average distance between the first sample, which is benign, and other benign samples?  
+Q: What is the average distance between the first sample and malignant samples?  
+```{r}
+d <- dist(x_scaled)
+str(d)
+d_m <- as.matrix(d)
+rowMeans(d_m[, brca$y == 'B'])[1]
+rowMeans(d_m[, brca$y == 'M'])[1]
+```
+
+#### Question 4: Heatmap of features
+Make a heatmap of the relationship between features using the scaled matrix.
+
+Which of these heatmaps is correct?  
+NB: To remove column and row labels like the images below, use labRow = NA and labCol = NA.
+
+```{r}
+d_features <- dist(t(x_scaled))
+heatmap(as.matrix(d_features), labRow = NA, labCol = NA)
+```
+
+#### Question 5: Hierarchical clustering
+Perform hierarchical clustering on the 30 features. Cut the tree into 5 groups.  
+All but one of the answer options are in the same group.
+
+Q: Which is in a different group?  
+A: smoothness_worst
+```{r}
+h <- hclust(d_features)
+groups <- cutree(h, k = 5)
+str(groups)
+split(names(groups), groups)
+```
+
+### 7.1.2 Breast Cancer Project Part 2
+
+#### Question 6: PCA: proportion of variance
+Perform a principal component analysis of the scaled matrix.
+
+Q: What proportion of variance is explained by the first principal component?  
+Q: How many principal components are required to explain at least 90% of the variance?  
+```{r}
+pc <- prcomp(x_scaled)
+summary(pc)
+```
+
+#### Question 7: PCA: plotting PCs
+Plot the first two principal components with color representing tumor type (benign/malignant).
+
+Q: Which of the following is true?  
+A: Malignant tumors tend to have larger values of PC1 than benign tumors.
+```{r}
+data.frame(pc$x[,1:2], type = brca$y) %>%
+  ggplot(aes(PC1, PC2, color = type)) +
+  geom_point()
+```
+
+#### Question 8: PCA: PC boxplot
+Make a boxplot of the first 10 PCs grouped by tumor type.
+
+Q: Which PCs are significantly different enough by tumor type that there is no overlap in the interquartile ranges (IQRs) for benign and malignant samples?
+
+```{r}
+data.frame(pc$x[,1:10], type = brca$y) %>%
+    gather(key = "PC", value = "value", -type) %>%
+    ggplot(aes(PC, value, fill = type)) +
+    geom_boxplot()
+```
+
+
+### 7.1.3 Breast Cancer Project Part 3
+
+Set the seed to 1, then create a data partition splitting brca$y and the scaled version of the brca$x matrix into a 20% test set and 80% train using the following code:
+
+```{r}
+set.seed(1, sample.kind = "Rounding")    # if using R 3.6 or later
+test_index <- createDataPartition(brca$y, times = 1, p = 0.2, list = FALSE)
+test_x <- x_scaled[test_index,]
+test_y <- brca$y[test_index]
+train_x <- x_scaled[-test_index,]
+train_y <- brca$y[-test_index]
+```
+
+
+You will be using these training and test sets throughout the exercises in Parts 3 and 4. Save your models as you go, because at the end, you'll be asked to make an ensemble prediction and to compare the accuracy of the various models!
+
+#### Question 9: Training and test sets
+Check that the training and test sets have similar proportions of benign and malignant tumors.
+
+Q: What proportion of the training set is benign?  
+Q: What proportion of the test set is benign?  
+```{r}
+mean(train_y == 'B')
+mean(test_y == 'B')
+```
+
+#### Question 10a: K-means Clustering
+
+The **predict_kmeans** function defined here takes two arguments - a matrix of observations x and a k-means object k - and assigns each row of x to a cluster from k.
+
+```{r}
+predict_kmeans <- function(x, k) {
+    centers <- k$centers    # extract cluster centers
+    # calculate distance to cluster centers
+    distances <- sapply(1:nrow(x), function(i){
+                            apply(centers, 1, function(y) dist(rbind(x[i,], y)))
+                 })
+    max.col(-t(distances))  # select cluster with min distance to center
+}
+```
+
+Set the seed to 3. Perform k-means clustering on the training set with 2 centers and assign the output to k. Then use the predict_kmeans function to make predictions on the test set.
+
+What is the overall accuracy?
+```{r}
+set.seed(3, sample.kind = "Rounding")    # if using R 3.6 or later
+
+k <- kmeans(train_x, centers = 2)
+kmeans_preds <- predict_kmeans(test_x, k)
+kmeans_preds <- sapply(kmeans_preds, function(val) (ifelse(val==1, 'B', 'M')))
+mean(kmeans_preds == test_y)
+```
+
+#### Question 10b: K-means Clustering
+Q: What proportion of benign tumors are correctly identified?  
+Q: What proportion of malignant tumors are correctly identified?  
+```{r}
+# My way
+#sum(y_hat == 'B' & y_hat == test_y) / sum(test_y == 'B')
+#sum(y_hat == 'M' & y_hat == test_y) / sum(test_y == 'M')
+
+# Sol way
+sensitivity(factor(y_hat), test_y, positive = "B")
+sensitivity(factor(y_hat), test_y, positive = "M")
+```
+
+#### Question 11: Logistic regression model
+Fit a logistic regression model on the training set using all predictors. Ignore warnings about the algorithm not converging. Make predictions on the test set.
+
+What is the accuracy of the logistic regression model on the test set?
+```{r}
+# My way: use dataframes, and glm, and convert
+train_set <- data.frame(x=train_x, y=train_y)
+test_set <- data.frame(x=test_x)
+
+fit_logreg <- glm(y ~ ., data = train_set, family='binomial')
+
+p_hat_logit <- predict(fit_logreg, test_set)
+y_hat_logit <- factor(ifelse(p_hat_logit > 0, 'M', 'B'))
+mean(y_hat_logit == test_y)
+
+# Solution Way: use train
+train_glm <- train(train_x, train_y,
+                     method = "glm")
+glm_preds <- predict(train_glm, test_x)
+mean(glm_preds == test_y)
+```
+
+#### Question 12: LDA and QDA models
+Train an LDA model and a QDA model on the training set. Make predictions on the test set using each model.
+
+Q: What is the accuracy of the LDA model on the test set?  
+Q: What is the accuracy of the QDA model on the test set?  
+
+```{r}
+fit_lda <- train(train_x, train_y, method = 'lda')
+lda_preds <- predict(fit_lda, test_x)
+mean(lda_preds == test_y)
+
+fit_qda <- train(train_x, train_y, method = 'qda')
+qda_preds <- predict(fit_qda, test_x)
+mean(qda_preds == test_y)
+```
+
+#### Question 13: Loess model (Local Weighted Regression)
+Set the seed to 5, then fit a loess model on the training set with the caret package (nb: that means use function *train(..., method='gamLoess')*). You will need to install the gam package if you have not yet done so. Use the default tuning grid. This may take several minutes; ignore warnings. Generate predictions on the test set.
+
+What is the accuracy of the loess model on the test set?
+```{r}
+set.seed(5, sample.kind = 'Rounding')
+library(gam)
+
+#fit_loess <- lo(list(train_x, train_y)) #, span = span, degree = 1)
+fit_loess <- train(train_x, train_y, method='gamLoess')
+loess_preds <- predict(fit_loess, test_x)
+mean(loess_preds == test_y)
+
+```
+
+### 7.1.4 Breast Cancer Project Part 4
+
+#### Question 14: K-nearest neighbors model
+Set the seed to 7, then train a k-nearest neighbors model on the training set using the caret package. Try odd values of $k$ from 3 to 21. Use the final model to generate predictions on the test set.
+
+Q: What is the final value of $k$ used in the model?
+A: What is the accuracy of the kNN model on the test set?
+
+```{r}
+set.seed(7, sample.kind = 'Rounding')
+
+k <- seq(3, 21, 2)
+tuning <- data.frame(k = seq(3, 21, 2))
+fit_knn <- train(train_x, train_y, method = "knn", tuneGrid = tuning)
+fit_knn$bestTune
+knn_preds <- predict(fit_knn, test_x)
+mean(knn_preds == test_y)
+```
+
+#### Question 15a: Random forest model
+Set the seed to 9, then train a random forest model on the training set using the caret package. Test mtry values of 3, 5, 7 and 9. Use the argument importance=TRUE so that feature importance can be extracted. Generate predictions on the test set.
+
+Q: What value of mtry gives the highest accuracy?  
+Q: What is the accuracy of the random forest model on the test set?  
+Q: What is the most important variable in the random forest model?  
+
+```{r}
+set.seed(9,, sample.kind = 'Rounding')
+
+mtry <- seq(3, 21, 2)
+tuning <- data.frame(mtry = seq(3, 9, 2))
+fit_rf <- train(train_x, train_y, method = "rf", tuneGrid = tuning, importance = TRUE)
+
+fit_rf$bestTune
+
+rf_preds <- predict(fit_rf, test_x)
+mean(rf_preds == test_y)
+
+varImp(fit_rf)
+```
+
+#### Question 15b: Random forest model
+...
+
+#### Question 16a: Creating an ensemble
+Create an ensemble using the predictions from the 7 models created in the previous exercises: k-means, logistic regression, LDA, QDA, loess, k-nearest neighbors, and random forest. Use the ensemble to generate a majority prediction of the tumor type (if most models suggest the tumor is malignant, predict malignant).
+
+Q: What is the accuracy of the ensemble prediction?
+```{r}
+ensemble <- cbind(glm = glm_preds == "B", lda = lda_preds == "B", qda = qda_preds == "B", loess = loess_preds == "B", rf = rf_preds == "B", knn = knn_preds == "B", kmeans = kmeans_preds == "B")
+
+ensemble_preds <- ifelse(rowMeans(ensemble) > 0.5, "B", "M")
+mean(ensemble_preds == test_y)
+```
+
+#### Question 16b: Creating an ensemble
+Make a table of the accuracies of the 7 models and the accuracy of the ensemble model.
+
+Q: Which of these models has the highest accuracy?  
+A:
+```{r}
+models <- c("K means", "Logistic regression", "LDA", "QDA", "Loess", "K nearest neighbors", "Random forest", "Ensemble")
+accuracy <- c(mean(kmeans_preds == test_y),
+              mean(glm_preds == test_y),
+              mean(lda_preds == test_y),
+              mean(qda_preds == test_y),
+              mean(loess_preds == test_y),
+              mean(knn_preds == test_y),
+              mean(rf_preds == test_y),
+              mean(ensemble_preds == test_y))
+df_models <- data.frame(Model = models, Accuracy = accuracy)
+df_models
+```
+
+## 7.2 Course Wrap-up
+
